@@ -9,37 +9,36 @@
 
 namespace qasm {
 
-/*-------------------------------------------------------
- * 0.  外部 Simulator 登録
- *------------------------------------------------------*/
-inline qcs::simulator* g_simulator = nullptr;
-
-inline void register_simulator(qcs::simulator* sim) noexcept {
-    g_simulator = sim;
-}
-
-/*-------------------------------------------------------
- * 1.  量子レジスタ（連番 ID を払い出すだけ）
- *------------------------------------------------------*/
-namespace detail {
-    inline int g_next_id = 0;   // グローバル連番
-}
-
-class qubits {
+class qasm {
 public:
-    explicit qubits(int n) : base_(detail::g_next_id), size_(n) {
-        assert(n > 0);
-        detail::g_next_id += n;
-        qcs::alloc_qubit(n);    // 低レイヤへ通知
+    qasm() = default;
+
+    /*-------------------------------------------------------
+     * 0.  外部 Simulator 登録
+     *------------------------------------------------------*/
+    void register_simulator(qcs::simulator* sim) noexcept {
+        simulator_ = sim;
     }
-    int operator[](int i) const {
-        assert(0 <= i && i < size_);
-        return base_ + i;
-    }
-private:
-    int base_;
-    int size_;
-};
+
+    /*-------------------------------------------------------
+     * 1.  量子レジスタ（連番 ID を払い出すだけ）
+     *------------------------------------------------------*/
+    class qubits {
+    public:
+        qubits(qasm& ctx, int n) : ctx_(ctx), base_(ctx.next_id_), size_(n) {
+            assert(n > 0);
+            ctx.next_id_ += n;
+            qcs::alloc_qubit(n);    // 低レイヤへ通知
+        }
+        int operator[](int i) const {
+            assert(0 <= i && i < size_);
+            return base_ + i;
+        }
+    private:
+        qasm& ctx_;
+        int base_;
+        int size_;
+    };
 
 /*-------------------------------------------------------
  * 2.  ビルダーに詰めるトークン
@@ -55,6 +54,16 @@ struct token {
  *------------------------------------------------------*/
 class builder {
 public:
+    builder(const qasm& ctx) : ctx_(ctx) {}
+    builder(const qasm& ctx, token tk) : ctx_(ctx) { seq_.push_back(tk); }
+    builder(const builder& rhs) : ctx_(rhs.ctx_), seq_(rhs.seq_) {}
+    builder& operator=(const builder& rhs) {
+        if (this != &rhs) {
+            seq_ = rhs.seq_;
+        }
+        return *this;
+    }
+
     /*--- 演算子* でトークン列を連結 ----------------------*/
     builder  operator*(const builder& rhs) const {
         builder out = *this;
@@ -110,23 +119,18 @@ public:
     }
 
     /*--- 内部用：トークン生成 ----------------------------*/
-    explicit builder(token tk) { seq_.push_back(tk); }
-    builder() = default;
+    explicit builder(token tk) = delete;
 
 private:
+    const qasm& ctx_;
     std::vector<token> seq_;
 
-    static void dispatch(int tgt,
-                         const math::matrix_t& m,
-                         const std::vector<int>& pcs,
-                         const std::vector<int>& ncs)
+    void dispatch(int tgt,
+                  const math::matrix_t& m,
+                  const std::vector<int>& pcs,
+                  const std::vector<int>& ncs) const
     {
-        assert(g_simulator && "simulator not registered");
-        qcs::gate_matrix(g_simulator,
-                         m,
-                         tgt,
-                         pcs.data(), static_cast<int>(pcs.size()),
-                         ncs.data(), static_cast<int>(ncs.size()));
+        ctx_.dispatch(tgt, m, pcs, ncs);
     }
 };
 
@@ -136,24 +140,24 @@ private:
 inline builder h() {
     token tk{token::MATRIX};
     tk.mat = math::matrix_hadamard;
-    return builder{tk};
+    return builder(*this, tk);
 }
 
 inline builder u(double th, double ph, double la) {
     token tk{token::MATRIX};
     tk.mat = math::generate_matrix_u(th, ph, la);
-    return builder{tk};
+    return builder(*this, tk);
 }
 
 inline builder pow(double exp) {
     token tk{token::POW};
     tk.val = exp;
-    return builder{tk};
+    return builder(*this, tk);
 }
 
 inline builder inv() {
     token tk{token::INV};
-    return builder{tk};
+    return builder(*this, tk);
 }
 
 inline builder sqrt() {
@@ -165,22 +169,40 @@ inline builder sqrt() {
  *------------------------------------------------------*/
 template<int N> inline builder ctrl() {
     static_assert(N >= 1, "ctrl<N> requires N >= 1");
-    builder out;
+    builder out(*this);
     for (int i = 0; i < N; ++i) {
         token tk{token::POS_CTRL};
-        out = out * builder{tk};
+        out = out * builder(*this, tk);
     }
     return out;
 }
 
 template<int N> inline builder negctrl() {
     static_assert(N >= 1, "negctrl<N> requires N >= 1");
-    builder out;
+    builder out(*this);
     for (int i = 0; i < N; ++i) {
         token tk{token::NEG_CTRL};
-        out = out * builder{tk};
+        out = out * builder(*this, tk);
     }
     return out;
 }
+
+private:
+    void dispatch(int tgt,
+                  const math::matrix_t& m,
+                  const std::vector<int>& pcs,
+                  const std::vector<int>& ncs) const
+    {
+        assert(simulator_ && "simulator not registered");
+        qcs::gate_matrix(simulator_,
+                         m,
+                         tgt,
+                         pcs.data(), static_cast<int>(pcs.size()),
+                         ncs.data(), static_cast<int>(ncs.size()));
+    }
+
+    qcs::simulator* simulator_ = nullptr;
+    int next_id_ = 0;
+};
 
 } // namespace qasm

@@ -39,14 +39,15 @@ void qcs::gate_matrix(simulator*, math::matrix_t matrix, int tgt, int const* pc_
 int main() {
 
     qcs::simulator sim;
-    qasm::register_simulator(&sim);
+    qasm::qasm q;
+    q.register_simulator(&sim);
 
-    qasm::qubits q1(8), q2(8);
+    qasm::qasm::qubits q1(q, 8), q2(q, 8);
 
-    (qasm::negctrl<2>() * qasm::ctrl<2>() * qasm::h())(q1[0], q1[1], q1[2], q1[3], q1[4]);
-    qasm::u(0, 0, 1.0)(q1[0]);
-    qasm::u(0, 0, 0.5)(q1[0]);
-    (qasm::ctrl<2>() * qasm::pow(0.5) * qasm::u(0, 0, 1.0))(q1[0], q1[1], q1[2]);
-    (qasm::inv() * qasm::h())(q1[0]);
-    (qasm::ctrl<2>() * qasm::h())(q2[0], q2[1], q2[2]);
+    (q.negctrl<2>() * q.ctrl<2>() * q.h())(q1[0], q1[1], q1[2], q1[3], q1[4]);
+    q.u(0, 0, 1.0)(q1[0]);
+    q.u(0, 0, 0.5)(q1[0]);
+    (q.ctrl<2>() * q.pow(0.5) * q.u(0, 0, 1.0))(q1[0], q1[1], q1[2]);
+    (q.inv() * q.h())(q1[0]);
+    (q.ctrl<2>() * q.h())(q2[0], q2[1], q2[2]);
 }
