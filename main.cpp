@@ -45,14 +45,59 @@ constexpr qcs::matrix_t qcs::generate_matrix_u(double theta, double phi, double 
 };
 
 
-qcs::matrix_t matrix_inv(qcs::matrix_t m)
+qcs::matrix_t qcs::matrix_inv(qcs::matrix_t m)
 {
-    return qcs::matrix_t();
+    using cmplx = std::complex<double>;
+    cmplx a = m[0];
+    cmplx b = m[1];
+    cmplx c = m[2];
+    cmplx d = m[3];
+    cmplx det = a*d - b*c;
+    return qcs::matrix_t{d/det, -b/det, -c/det, a/det};
 }
 
-qcs::matrix_t matrix_pow(qcs::matrix_t m, double exponent)
+qcs::matrix_t qcs::matrix_pow(qcs::matrix_t m, double exponent)
 {
-    return qcs::matrix_t();
+    using cmplx = std::complex<double>;
+    cmplx a = m[0];
+    cmplx b = m[1];
+    cmplx c = m[2];
+    cmplx d = m[3];
+    if (std::abs(b) < 1e-12 && std::abs(c) < 1e-12) {
+        return qcs::matrix_t{std::pow(a, exponent), cmplx{}, cmplx{}, std::pow(d, exponent)};
+    }
+    cmplx trace = a + d;
+    cmplx det   = a*d - b*c;
+    cmplx disc  = std::sqrt(trace*trace - cmplx{4.0,0.0}*det);
+    cmplx lam1  = (trace + disc) / cmplx{2.0,0.0};
+    cmplx lam2  = (trace - disc) / cmplx{2.0,0.0};
+
+    cmplx v1_0 = b != cmplx{0.0,0.0} ? cmplx{1.0,0.0} : -(lam1 - d)/c;
+    cmplx v1_1 = b != cmplx{0.0,0.0} ? (lam1 - a)/b : cmplx{1.0,0.0};
+    cmplx v2_0 = b != cmplx{0.0,0.0} ? cmplx{1.0,0.0} : -(lam2 - d)/c;
+    cmplx v2_1 = b != cmplx{0.0,0.0} ? (lam2 - a)/b : cmplx{1.0,0.0};
+
+    cmplx P0 = v1_0, P1 = v2_0, P2 = v1_1, P3 = v2_1;
+    cmplx detP = P0*P3 - P1*P2;
+    cmplx iP0 =  P3/detP;
+    cmplx iP1 = -P1/detP;
+    cmplx iP2 = -P2/detP;
+    cmplx iP3 =  P0/detP;
+
+    cmplx d1 = std::pow(lam1, exponent);
+    cmplx d2 = std::pow(lam2, exponent);
+
+    cmplx B0 = d1 * iP0;
+    cmplx B1 = d1 * iP1;
+    cmplx B2 = d2 * iP2;
+    cmplx B3 = d2 * iP3;
+
+    qcs::matrix_t out;
+    out[0] = P0*B0 + P1*B2;
+    out[1] = P0*B1 + P1*B3;
+    out[2] = P2*B0 + P3*B2;
+    out[3] = P2*B1 + P3*B3;
+    return out;
 }
 
 int main() {
