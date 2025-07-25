@@ -45,18 +45,8 @@ constexpr qcs::matrix_t qcs::generate_matrix_u(double theta, double phi, double 
 };
 
 
-qcs::matrix_t qcs::matrix_inv(qcs::matrix_t m)
-{
-    using cmplx = std::complex<double>;
-    cmplx a = m[0];
-    cmplx b = m[1];
-    cmplx c = m[2];
-    cmplx d = m[3];
-    cmplx det = a*d - b*c;
-    return qcs::matrix_t{d/det, -b/det, -c/det, a/det};
-}
 
-qcs::matrix_t qcs::matrix_pow(qcs::matrix_t m, double exponent)
+QCS_CONSTEXPR26 qcs::matrix_t qcs::matrix_pow(qcs::matrix_t m, double exponent)
 {
     using cmplx = std::complex<double>;
     cmplx a = m[0];
