@@ -1,2 +1,2 @@
 #!/bin/sh
-g++ -std=c++17 main.cpp
+g++ -std=c++11 main.cpp
