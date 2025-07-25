@@ -86,9 +86,13 @@ public:
                 invert = true; break;
             case token::MATRIX:
                 mat = t.mat;     // 基本行列
-                /* 簡易実装: pow と inv を無視しても Hadamard などは問題なし。
-                   本格利用時には qcs::matrix_pow / matrix_inv などで
-                   加工してください。                                      */
+                // apply optional operations
+                if (pow_exp != 1.0) {
+                    mat = qcs::matrix_pow(mat, pow_exp);
+                }
+                if (invert) {
+                    mat = qcs::matrix_inv(mat);
+                }
                 has_mat = true;
                 // 対応する量子ビットは「ターゲット」
                 dispatch(argv[arg_idx++], mat,
