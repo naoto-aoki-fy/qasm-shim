@@ -10,6 +10,12 @@
 #  define MATH_CONSTEXPR26
 #endif
 
+#if __cplusplus >= 201703L
+#  define MATH_CONSTEXPR17 constexpr
+#else
+#  define MATH_CONSTEXPR17
+#endif
+
 namespace math {
 
 using complex_t = std::complex<double>;
@@ -18,28 +24,32 @@ using matrix_t  = std::array<complex_t, 4>;
 /*-------------------------------------------------------
  * constexpr utility operations for complex_t
  *------------------------------------------------------*/
-constexpr complex_t cadd(complex_t x, complex_t y) {
+MATH_CONSTEXPR17 complex_t cadd(complex_t x, complex_t y) {
     return complex_t{x.real() + y.real(), x.imag() + y.imag()};
 }
 
-constexpr complex_t csub(complex_t x, complex_t y) {
+MATH_CONSTEXPR17 complex_t csub(complex_t x, complex_t y) {
     return complex_t{x.real() - y.real(), x.imag() - y.imag()};
 }
 
-constexpr complex_t cmul(complex_t x, complex_t y) {
+MATH_CONSTEXPR17 complex_t cmul(complex_t x, complex_t y) {
     return complex_t{x.real()*y.real() - x.imag()*y.imag(),
                      x.real()*y.imag() + x.imag()*y.real()};
 }
 
-constexpr complex_t cdiv(complex_t x, complex_t y) {
+MATH_CONSTEXPR17 complex_t cdiv(complex_t x, complex_t y) {
     double den = y.real()*y.real() + y.imag()*y.imag();
     return complex_t{(x.real()*y.real() + x.imag()*y.imag())/den,
                      (x.imag()*y.real() - x.real()*y.imag())/den};
 }
 
+#if __cplusplus >= 201703L
 inline matrix_t matrix_hadamard = { M_SQRT1_2, M_SQRT1_2, M_SQRT1_2, - M_SQRT1_2 };
+#else
+static const matrix_t matrix_hadamard = { M_SQRT1_2, M_SQRT1_2, M_SQRT1_2, - M_SQRT1_2 };
+#endif
 
-constexpr matrix_t generate_matrix_u(double theta, double phi, double lambda) {
+MATH_CONSTEXPR17 matrix_t generate_matrix_u(double theta, double phi, double lambda) {
     return matrix_t{
         complex_t{0.5 * (1 + std::cos(theta)), 0.5 * std::sin(theta)},
         complex_t{0.5 * (std::sin(lambda) - std::sin(lambda + theta)), -0.5 * (std::cos(lambda) - std::cos(lambda + theta))},
@@ -91,7 +101,7 @@ MATH_CONSTEXPR26 matrix_t matrix_pow(matrix_t m, double exponent) {
     return out;
 }
 
-constexpr matrix_t matrix_inv(matrix_t matrix_in) {
+MATH_CONSTEXPR17 matrix_t matrix_inv(matrix_t matrix_in) {
     complex_t det = csub(cmul(std::get<0>(matrix_in), std::get<3>(matrix_in)),
                         cmul(std::get<1>(matrix_in), std::get<2>(matrix_in)));
     return matrix_t{

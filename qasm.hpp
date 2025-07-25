@@ -47,6 +47,7 @@ struct token {
     enum kind_t { POS_CTRL, NEG_CTRL, MATRIX, POW, INV } kind;
     math::matrix_t mat {};   // MATRIX のときに使用
     double        val = 1;  // POW のときに使用
+    explicit token(kind_t k) : kind(k), mat(), val(1) {}
 };
 
 /*-------------------------------------------------------
