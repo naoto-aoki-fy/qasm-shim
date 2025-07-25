@@ -43,10 +43,10 @@ int main() {
 
     qasm::qubits q1(8), q2(8);
 
-    (qasm::negctrl<1>() * qasm::ctrl<1>() * qasm::negctrl<1>() * qasm::h())(q1[0], q1[1], q1[2], q1[3]);
+    (qasm::negctrl<2>() * qasm::ctrl<2>() * qasm::h())(q1[0], q1[1], q1[2], q1[3], q1[4]);
     qasm::u(0, 0, 1.0)(q1[0]);
     qasm::u(0, 0, 0.5)(q1[0]);
-    (qasm::ctrl<1>() * qasm::negctrl<1>() * qasm::ctrl<1>() * qasm::pow(0.5) * qasm::u(0, 0, 1.0))(q1[0], q1[1], q1[2], q1[3]);
+    (qasm::ctrl<2>() * qasm::pow(0.5) * qasm::u(0, 0, 1.0))(q1[0], q1[1], q1[2]);
     (qasm::inv() * qasm::h())(q1[0]);
-    (qasm::ctrl<1>() * qasm::h())(q2[0], q2[1]);
+    (qasm::ctrl<2>() * qasm::h())(q2[0], q2[1], q2[2]);
 }

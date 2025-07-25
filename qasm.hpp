@@ -161,18 +161,26 @@ inline builder sqrt() {
 }
 
 /*-------------------------------------------------------
- * 5.  条件付き演算子（1 ビット版のみ）
+ * 5.  条件付き演算子（N ビット版）
  *------------------------------------------------------*/
 template<int N> inline builder ctrl() {
-    static_assert(N == 1, "only ctrl<1> is supported in this minimal impl.");
-    token tk{token::POS_CTRL};
-    return builder{tk};
+    static_assert(N >= 1, "ctrl<N> requires N >= 1");
+    builder out;
+    for (int i = 0; i < N; ++i) {
+        token tk{token::POS_CTRL};
+        out = out * builder{tk};
+    }
+    return out;
 }
 
 template<int N> inline builder negctrl() {
-    static_assert(N == 1, "only negctrl<1> is supported in this minimal impl.");
-    token tk{token::NEG_CTRL};
-    return builder{tk};
+    static_assert(N >= 1, "negctrl<N> requires N >= 1");
+    builder out;
+    for (int i = 0; i < N; ++i) {
+        token tk{token::NEG_CTRL};
+        out = out * builder{tk};
+    }
+    return out;
 }
 
 } // namespace qasm
