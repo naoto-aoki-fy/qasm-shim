@@ -1,11 +1,11 @@
 #pragma once
 #include <vector>
 #include <array>
-#include <complex>
 #include <cassert>
 #include <cstddef>
 
 #include "qcs.hpp"
+#include "math.hpp"
 
 namespace qasm {
 
@@ -46,7 +46,7 @@ private:
  *------------------------------------------------------*/
 struct token {
     enum kind_t { POS_CTRL, NEG_CTRL, MATRIX, POW, INV } kind;
-    qcs::matrix_t mat {};   // MATRIX のときに使用
+    math::matrix_t mat {};   // MATRIX のときに使用
     double        val = 1;  // POW のときに使用
 };
 
@@ -68,7 +68,7 @@ public:
         static_assert(sizeof...(qs) > 0, "at least one qubit is required");
         std::array<int, sizeof...(qs)> argv{qs...};
         std::vector<int> pos_ctrls, neg_ctrls;
-        qcs::matrix_t     mat {};
+        math::matrix_t     mat {};
         bool              has_mat = false;
         double            pow_exp = 1.0;
         bool              invert  = false;
@@ -88,10 +88,10 @@ public:
                 mat = t.mat;     // 基本行列
                 // apply optional operations
                 if (pow_exp != 1.0) {
-                    mat = qcs::matrix_pow(mat, pow_exp);
+                    mat = math::matrix_pow(mat, pow_exp);
                 }
                 if (invert) {
-                    mat = qcs::matrix_inv(mat);
+                    mat = math::matrix_inv(mat);
                 }
                 has_mat = true;
                 // 対応する量子ビットは「ターゲット」
@@ -117,7 +117,7 @@ private:
     std::vector<token> seq_;
 
     static void dispatch(int tgt,
-                         const qcs::matrix_t& m,
+                         const math::matrix_t& m,
                          const std::vector<int>& pcs,
                          const std::vector<int>& ncs)
     {
@@ -135,13 +135,13 @@ private:
  *------------------------------------------------------*/
 inline builder h() {
     token tk{token::MATRIX};
-    tk.mat = qcs::matrix_hadamard;
+    tk.mat = math::matrix_hadamard;
     return builder{tk};
 }
 
 inline builder u(double th, double ph, double la) {
     token tk{token::MATRIX};
-    tk.mat = qcs::generate_matrix_u(th, ph, la);
+    tk.mat = math::generate_matrix_u(th, ph, la);
     return builder{tk};
 }
 
