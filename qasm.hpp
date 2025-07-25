@@ -81,9 +81,9 @@ public:
             case token::NEG_CTRL:
                 neg_ctrls.push_back(argv[arg_idx++]); break;
             case token::POW:
-                pow_exp = t.val; break;
+                pow_exp *= t.val; break;
             case token::INV:
-                invert = true; break;
+                invert = !invert; break;
             case token::MATRIX:
                 mat = t.mat;     // 基本行列
                 // apply optional operations
@@ -154,6 +154,10 @@ inline builder pow(double exp) {
 inline builder inv() {
     token tk{token::INV};
     return builder{tk};
+}
+
+inline builder sqrt() {
+    return pow(0.5) * inv();
 }
 
 /*-------------------------------------------------------
