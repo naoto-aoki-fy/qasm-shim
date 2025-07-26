@@ -11,7 +11,7 @@ A minimal stub simulator is included which prints operations to `stderr`. Other 
 Run `build.sh` to compile the example circuit (`userqasm.cpp`) into `userqasm.so` and link the main executable:
 
 ```sh
-./build.sh
+make all
 ```
 
 This will generate `main` and `userqasm.so`. Executing `./main` will load the user circuit and forward operations to the simulator stub.
