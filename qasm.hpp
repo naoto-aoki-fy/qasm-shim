@@ -19,15 +19,12 @@ namespace qasm
         int last;
     };
 
-    inline slice_t slice(int first, int last)
-    {
-        return slice_t{first, last};
-    }
+    slice_t slice(int first, int last);
 
     struct set
     {
         std::vector<int> indices;
-        set(std::initializer_list<int> lst) : indices(lst) {}
+        set(std::initializer_list<int> lst);
     };
 
     struct indices_t
@@ -53,10 +50,7 @@ namespace qasm
         /*-------------------------------------------------------
          * 外部 Simulator 登録
          *------------------------------------------------------*/
-        void register_simulator(qcs::simulator *sim) noexcept
-        {
-            simulator_ = sim;
-        }
+        void register_simulator(qcs::simulator *sim) noexcept;
 
         /*-------------------------------------------------------
          * 単一量子ゲート生成関数
@@ -68,10 +62,7 @@ namespace qasm
         builder sqrt();
 
         // user-defined circuit to be overridden
-        virtual void circuit()
-        {
-            throw std::runtime_error("circuit not implemented");
-        }
+        virtual void circuit();
 
         /*-------------------------------------------------------
          * 条件付き演算子（N ビット版）
@@ -94,47 +85,11 @@ namespace qasm
     class qubits
     {
     public:
-        qubits(qasm &ctx, int n) : ctx_(ctx), base_(ctx.next_id_), size_(n)
-        {
-            assert(n > 0);
-            ctx.next_id_ += n;
-            qcs::alloc_qubit(n); // 低レイヤへ通知
-        }
-        int operator[](int i) const
-        {
-            assert(0 <= i && i < size_);
-            return base_ + i;
-        }
-        indices_t operator[](slice_t sl) const
-        {
-            assert(0 <= sl.first && sl.first <= sl.last && sl.last < size_);
-            indices_t out;
-            for (int i = sl.first; i <= sl.last; ++i)
-            {
-                out.values.push_back(base_ + i);
-            }
-            return out;
-        }
-        indices_t operator[](const set &s) const
-        {
-            indices_t out;
-            for (int v : s.indices)
-            {
-                assert(0 <= v && v < size_);
-                out.values.push_back(base_ + v);
-            }
-            return out;
-        }
-        indices_t operator[](std::initializer_list<int> lst) const
-        {
-            indices_t out;
-            for (int v : lst)
-            {
-                assert(0 <= v && v < size_);
-                out.values.push_back(base_ + v);
-            }
-            return out;
-        }
+        qubits(qasm &ctx, int n);
+        int operator[](int i) const;
+        indices_t operator[](slice_t sl) const;
+        indices_t operator[](const set &s) const;
+        indices_t operator[](std::initializer_list<int> lst) const;
 
     private:
         qasm &ctx_;
@@ -166,24 +121,12 @@ namespace qasm
     class builder
     {
     public:
-        builder(const qasm &ctx) : ctx_(ctx) {}
-        builder(const qasm &ctx, token tk) : ctx_(ctx) { seq_.push_back(tk); }
-        builder(const builder &rhs) : ctx_(rhs.ctx_), seq_(rhs.seq_) {}
-        builder &operator=(const builder &rhs)
-        {
-            if (this != &rhs)
-            {
-                seq_ = rhs.seq_;
-            }
-            return *this;
-        }
+        builder(const qasm &ctx);
+        builder(const qasm &ctx, token tk);
+        builder(const builder &rhs);
+        builder &operator=(const builder &rhs);
 
-        builder operator*(const builder &rhs) const
-        {
-            builder out = *this;
-            out.seq_.insert(out.seq_.end(), rhs.seq_.begin(), rhs.seq_.end());
-            return out;
-        }
+        builder operator*(const builder &rhs) const;
 
         template <typename... Q>
         void operator()(Q... qs) const
@@ -195,50 +138,7 @@ namespace qasm
             (*this)(argv);
         }
 
-        void operator()(const std::vector<int> &argv) const
-        {
-            std::vector<int> pos_ctrls, neg_ctrls;
-            math::matrix_t mat{};
-            double pow_exp = 1.0;
-            bool invert = false;
-            std::size_t arg_idx = 0;
-
-            for (const auto &t : seq_)
-            {
-                switch (t.kind)
-                {
-                case token::POS_CTRL:
-                    pos_ctrls.push_back(argv[arg_idx++]);
-                    break;
-                case token::NEG_CTRL:
-                    neg_ctrls.push_back(argv[arg_idx++]);
-                    break;
-                case token::POW:
-                    pow_exp *= t.val;
-                    break;
-                case token::INV:
-                    invert = !invert;
-                    break;
-                case token::MATRIX:
-                    mat = t.mat;
-                    if (pow_exp != 1.0)
-                    {
-                        mat = math::matrix_pow(mat, pow_exp);
-                    }
-                    if (invert)
-                    {
-                        mat = math::matrix_inv(mat);
-                    }
-                    dispatch(argv[arg_idx++], mat, pos_ctrls, neg_ctrls);
-                    pos_ctrls.clear();
-                    neg_ctrls.clear();
-                    pow_exp = 1.0;
-                    invert = false;
-                    break;
-                }
-            }
-            assert(arg_idx == argv.size());
-        }
+        void operator()(const std::vector<int> &argv) const;
 
         explicit builder(token tk) = delete;
 
@@ -246,15 +146,9 @@ namespace qasm
         const qasm &ctx_;
         std::vector<token> seq_;
 
-        static void append_arg(std::vector<int> &out, int v)
-        {
-            out.push_back(v);
-        }
-        static void append_arg(std::vector<int> &out, const indices_t &idx)
-        {
-            out.insert(out.end(), idx.values.begin(), idx.values.end());
-        }
-        static void append_args(std::vector<int> &) {}
+        static void append_arg(std::vector<int> &out, int v);
+        static void append_arg(std::vector<int> &out, const indices_t &idx);
+        static void append_args(std::vector<int> &);
         template <typename First, typename... Rest>
         static void append_args(std::vector<int> &out, First &&first, Rest &&...rest)
         {
@@ -262,76 +156,7 @@ namespace qasm
             append_args(out, std::forward<Rest>(rest)...);
         }
 
-        void dispatch(int tgt, const math::matrix_t &m, const std::vector<int> &pcs, const std::vector<int> &ncs) const
-        {
-            ctx_.dispatch(tgt, m, pcs, ncs);
-        }
+        void dispatch(int tgt, const math::matrix_t &m, const std::vector<int> &pcs, const std::vector<int> &ncs) const;
     };
-
-    inline builder qasm::h()
-    {
-        token tk{token::MATRIX};
-        tk.mat = math::generate_matrix_hadamard();
-        return builder(*this, tk);
-    }
-
-    inline builder qasm::u(double th, double ph, double la)
-    {
-        token tk{token::MATRIX};
-        tk.mat = math::generate_matrix_u(th, ph, la);
-        return builder(*this, tk);
-    }
-
-    inline builder qasm::pow(double exp)
-    {
-        token tk{token::POW};
-        tk.val = exp;
-        return builder(*this, tk);
-    }
-
-    inline builder qasm::inv()
-    {
-        token tk{token::INV};
-        return builder(*this, tk);
-    }
-
-    inline builder qasm::sqrt()
-    {
-        return pow(0.5) * inv();
-    }
-
-    inline builder qasm::ctrl(int N)
-    {
-        builder out(*this);
-        for (int i = 0; i < N; ++i)
-        {
-            token tk{token::POS_CTRL};
-            out = out * builder(*this, tk);
-        }
-        return out;
-    }
-
-    inline builder qasm::negctrl(int N)
-    {
-        builder out(*this);
-        for (int i = 0; i < N; ++i)
-        {
-            token tk{token::NEG_CTRL};
-            out = out * builder(*this, tk);
-        }
-        return out;
-    }
-
-    inline void qasm::dispatch(int tgt, const math::matrix_t &m, const std::vector<int> &pcs, const std::vector<int> &ncs) const
-    {
-        assert(simulator_ && "simulator not registered");
-        qcs::gate_matrix(simulator_, m, tgt, pcs.data(), static_cast<int>(pcs.size()), ncs.data(), static_cast<int>(ncs.size()));
-    }
-
-    inline qubits qasm::qalloc(int n)
-    {
-        return qubits(*this, n);
-    }
-
 
 } // namespace qasm
