@@ -126,6 +126,16 @@ namespace qasm
             }
             return out;
         }
+        indices_t operator[](std::initializer_list<int> lst) const
+        {
+            indices_t out;
+            for (int v : lst)
+            {
+                assert(0 <= v && v < size_);
+                out.values.push_back(base_ + v);
+            }
+            return out;
+        }
 
     private:
         qasm &ctx_;
