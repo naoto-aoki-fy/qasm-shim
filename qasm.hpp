@@ -3,11 +3,30 @@
 #include <array>
 #include <cassert>
 #include <cstddef>
+#include <initializer_list>
 
 #include "qcs.hpp"
 #include "math.hpp"
 
 namespace qasm {
+
+struct slice_t {
+    int first;
+    int last;
+};
+
+inline slice_t slice(int first, int last) {
+    return slice_t{first, last};
+}
+
+struct set {
+    std::vector<int> indices;
+    set(std::initializer_list<int> lst) : indices(lst) {}
+};
+
+struct indices_t {
+    std::vector<int> values;
+};
 
 class qasm {
 public:
@@ -33,6 +52,22 @@ public:
         int operator[](int i) const {
             assert(0 <= i && i < size_);
             return base_ + i;
+        }
+        indices_t operator[](slice_t sl) const {
+            assert(0 <= sl.first && sl.first <= sl.last && sl.last < size_);
+            indices_t out;
+            for (int i = sl.first; i <= sl.last; ++i) {
+                out.values.push_back(base_ + i);
+            }
+            return out;
+        }
+        indices_t operator[](const set& s) const {
+            indices_t out;
+            for (int v : s.indices) {
+                assert(0 <= v && v < size_);
+                out.values.push_back(base_ + v);
+            }
+            return out;
         }
     private:
         qasm& ctx_;
@@ -76,7 +111,9 @@ public:
     template<typename... Q>
     void operator()(Q... qs) const {
         static_assert(sizeof...(qs) > 0, "at least one qubit is required");
-        std::array<int, sizeof...(qs)> argv{qs...};
+        std::vector<int> argv;
+        argv.reserve(sizeof...(qs));
+        append_args(argv, qs...);
         std::vector<int> pos_ctrls, neg_ctrls;
         math::matrix_t     mat {};
         bool              has_mat = false;
@@ -125,6 +162,19 @@ public:
 private:
     const qasm& ctx_;
     std::vector<token> seq_;
+
+    static void append_arg(std::vector<int>& out, int v) {
+        out.push_back(v);
+    }
+    static void append_arg(std::vector<int>& out, const indices_t& idx) {
+        out.insert(out.end(), idx.values.begin(), idx.values.end());
+    }
+    static void append_args(std::vector<int>&) {}
+    template<typename First, typename... Rest>
+    static void append_args(std::vector<int>& out, First&& first, Rest&&... rest) {
+        append_arg(out, std::forward<First>(first));
+        append_args(out, std::forward<Rest>(rest)...);
+    }
 
     void dispatch(int tgt,
                   const math::matrix_t& m,
