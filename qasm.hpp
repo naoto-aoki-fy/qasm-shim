@@ -7,6 +7,7 @@
 #include <stdexcept>
 
 #include "qcs.hpp"
+#include "math_type.hpp"
 #include "math.hpp"
 
 namespace qasm
@@ -270,7 +271,7 @@ namespace qasm
     inline builder qasm::h()
     {
         token tk{token::MATRIX};
-        tk.mat = math::matrix_hadamard;
+        tk.mat = math::generate_matrix_hadamard();
         return builder(*this, tk);
     }
 
