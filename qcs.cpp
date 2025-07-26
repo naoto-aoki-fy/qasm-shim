@@ -1,12 +1,12 @@
 #include "qcs.hpp"
 #include <cstdio>
 
-void qcs::alloc_qubit(int n)
+void qcs::simulator::alloc_qubit(int n)
 {
     fprintf(stderr, "[qubit declare] %d\n", n);
 }
 
-void qcs::gate_matrix(simulator *, math::matrix_t matrix, int tgt, int const *pc_list, int num_pcs, int const *nc_list, int num_ncs)
+void qcs::simulator::gate_matrix(math::matrix_t matrix, int tgt, int const *pc_list, int num_pcs, int const *nc_list, int num_ncs)
 {
     fprintf(stderr, "gate matrix={");
 #pragma unroll
