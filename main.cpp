@@ -43,15 +43,7 @@ void qcs::gate_matrix(simulator *, math::matrix_t matrix, int tgt, int const *pc
 int main()
 {
     qcs::simulator sim;
-    qasm::qasm q;
+    qasm::userqasm q;
     q.register_simulator(&sim);
-
-    qasm::qubits q1(q, 8), q2(q, 8);
-
-    (q.negctrl<2>() * q.ctrl<2>() * q.h())(q1[0], q1[qasm::slice(1, 2)], q1[qasm::set{3, 4}]);
-    q.u(0, 0, 1.0)(q1[0]);
-    q.u(0, 0, 0.5)(q1[0]);
-    (q.ctrl<2>() * q.pow(0.5) * q.u(0, 0, 1.0))(q1[0], q1[1], q1[2]);
-    (q.inv() * q.h())(q1[0]);
-    (q.ctrl<2>() * q.h())(q2[0], q2[1], q2[2]);
+    q.circuit();
 }
