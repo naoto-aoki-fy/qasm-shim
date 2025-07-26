@@ -1,4 +1,6 @@
 #include "qasm.hpp"
+#include "qcs.hpp"
+#include "math.hpp"
 
 namespace qasm {
 

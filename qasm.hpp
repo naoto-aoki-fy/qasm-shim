@@ -1,14 +1,12 @@
 #pragma once
 #include <vector>
-#include <array>
 #include <cassert>
-#include <cstddef>
-#include <initializer_list>
-#include <stdexcept>
 
-#include "qcs.hpp"
 #include "math_type.hpp"
-#include "math.hpp"
+
+namespace qcs{
+    struct simulator;
+}
 
 namespace qasm
 {
