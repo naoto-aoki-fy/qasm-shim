@@ -41,7 +41,8 @@ namespace qasm
     class qasm
     {
     public:
-        qasm() = default;
+        inline qasm() = default;
+        inline virtual ~qasm() = default;
 
         /*-------------------------------------------------------
          * 外部 Simulator 登録
@@ -312,21 +313,5 @@ namespace qasm
         qcs::gate_matrix(simulator_, m, tgt, pcs.data(), static_cast<int>(pcs.size()), ncs.data(), static_cast<int>(ncs.size()));
     }
 
-    class userqasm : public qasm
-    {
-    public:
-        void circuit() override;
-    };
-
-    inline void userqasm::circuit()
-    {
-        qubits q1(*this, 8), q2(*this, 8);
-        (negctrl<2>() * ctrl<2>() * h())(q1[0], q1[slice(1, 2)], q1[set{3, 4}]);
-        u(0, 0, 1.0)(q1[0]);
-        u(0, 0, 0.5)(q1[0]);
-        (ctrl<2>() * pow(0.5) * u(0, 0, 1.0))(q1[0], q1[1], q1[2]);
-        (inv() * h())(q1[0]);
-        (ctrl<2>() * h())(q2[0], q2[1], q2[2]);
-    }
 
 } // namespace qasm

@@ -25,23 +25,23 @@ namespace math
     /*-------------------------------------------------------
      * constexpr utility operations for complex_t
      *------------------------------------------------------*/
-    MATH_CONSTEXPR17 complex_t cadd(complex_t x, complex_t y)
+    MATH_CONSTEXPR17 inline complex_t cadd(complex_t x, complex_t y)
     {
         return complex_t{x.real() + y.real(), x.imag() + y.imag()};
     }
 
-    MATH_CONSTEXPR17 complex_t csub(complex_t x, complex_t y)
+    MATH_CONSTEXPR17 inline complex_t csub(complex_t x, complex_t y)
     {
         return complex_t{x.real() - y.real(), x.imag() - y.imag()};
     }
 
-    MATH_CONSTEXPR17 complex_t cmul(complex_t x, complex_t y)
+    MATH_CONSTEXPR17 inline complex_t cmul(complex_t x, complex_t y)
     {
         return complex_t{x.real() * y.real() - x.imag() * y.imag(),
                          x.real() * y.imag() + x.imag() * y.real()};
     }
 
-    MATH_CONSTEXPR17 complex_t cdiv(complex_t x, complex_t y)
+    MATH_CONSTEXPR17 inline complex_t cdiv(complex_t x, complex_t y)
     {
         double den = y.real() * y.real() + y.imag() * y.imag();
         return complex_t{(x.real() * y.real() + x.imag() * y.imag()) / den,
@@ -54,7 +54,7 @@ namespace math
     static const matrix_t matrix_hadamard = {M_SQRT1_2, M_SQRT1_2, M_SQRT1_2, -M_SQRT1_2};
 #endif
 
-    MATH_CONSTEXPR17 matrix_t generate_matrix_u(double theta, double phi, double lambda)
+    MATH_CONSTEXPR17 inline matrix_t generate_matrix_u(double theta, double phi, double lambda)
     {
         return matrix_t{
             complex_t{0.5 * (1 + std::cos(theta)), 0.5 * std::sin(theta)},
@@ -63,7 +63,7 @@ namespace math
             complex_t{0.5 * (std::cos(phi + lambda) + std::cos(phi + lambda + theta)), 0.5 * (std::sin(phi + lambda) + std::sin(phi + lambda + theta))}};
     }
 
-    MATH_CONSTEXPR26 matrix_t matrix_pow(matrix_t m, double exponent)
+    MATH_CONSTEXPR26 inline matrix_t matrix_pow(matrix_t m, double exponent)
     {
         using cmplx = complex_t;
         cmplx a = m[0];
@@ -108,7 +108,7 @@ namespace math
         return out;
     }
 
-    MATH_CONSTEXPR17 matrix_t matrix_inv(matrix_t matrix_in)
+    MATH_CONSTEXPR17 inline matrix_t matrix_inv(matrix_t matrix_in)
     {
         complex_t det = csub(cmul(std::get<0>(matrix_in), std::get<3>(matrix_in)), cmul(std::get<1>(matrix_in), std::get<2>(matrix_in)));
         return matrix_t{

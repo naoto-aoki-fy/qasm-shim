@@ -1,49 +1,25 @@
-#include "qcs.hpp"
-#include "qasm.hpp"
 #include <cstdio>
-
-void qcs::alloc_qubit(int n)
-{
-    fprintf(stderr, "[qubit declare] %d\n", n);
-}
-
-void qcs::gate_matrix(simulator *, math::matrix_t matrix, int tgt, int const *pc_list, int num_pcs, int const *nc_list, int num_ncs)
-{
-    fprintf(stderr, "gate matrix={");
-#pragma unroll
-    for (int i = 0; i < 4; ++i)
-    {
-        fprintf(stderr, "{%lf, %lf}", matrix[i].real(), matrix[i].imag());
-        if (i < 3)
-        {
-            fprintf(stderr, ", ");
-        }
-    }
-    fprintf(stderr, "} tgt=%d pc={", tgt);
-    for (int pc_num = 0; pc_num < num_pcs; ++pc_num)
-    {
-        fprintf(stderr, "%d", pc_list[pc_num]);
-        if (pc_num < num_pcs - 1)
-        {
-            fprintf(stderr, ", ");
-        }
-    }
-    fprintf(stderr, "} nc={");
-    for (int nc_num = 0; nc_num < num_ncs; ++nc_num)
-    {
-        fprintf(stderr, "%d", nc_list[nc_num]);
-        if (nc_num < num_ncs - 1)
-        {
-            fprintf(stderr, ", ");
-        }
-    }
-    fprintf(stderr, "}\n");
-}
+#include <dlfcn.h>
+#include <stdexcept>
+#include "qasm.hpp"
+#include "qcs.hpp"
 
 int main()
 {
     qcs::simulator sim;
-    qasm::userqasm q;
-    q.register_simulator(&sim);
-    q.circuit();
+
+    const auto userqasm_dl = dlopen("./userqasm.so", RTLD_LAZY);
+    if (userqasm_dl == NULL) { throw std::runtime_error("dlopen failed"); }
+
+    auto userqasm_constructor = reinterpret_cast<qasm::qasm*(*)()>(dlsym(userqasm_dl, "constructor"));
+
+    qasm::qasm* q = userqasm_constructor();
+    q->register_simulator(&sim);
+    q->circuit();
+    delete q;
+
+    int const ret_dlclose = dlclose(userqasm_dl);
+    if (ret_dlclose != 0) { throw std::runtime_error("dlclose failed"); }
+
+    return 0;
 }

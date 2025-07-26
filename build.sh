@@ -1,2 +1,3 @@
 #!/bin/sh
-g++ -std=c++11 main.cpp -o main
+g++ -fPIC -shared -std=c++11 userqasm.cpp -o userqasm.so
+g++ -std=c++11 -rdynamic main.cpp qcs.cpp -o main
