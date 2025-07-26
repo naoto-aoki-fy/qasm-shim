@@ -45,6 +45,11 @@ namespace qasm
         inline virtual ~qasm() = default;
 
         /*-------------------------------------------------------
+         * qubits allocation helper
+         *------------------------------------------------------*/
+        qubits qalloc(int n);
+
+        /*-------------------------------------------------------
          * 外部 Simulator 登録
          *------------------------------------------------------*/
         void register_simulator(qcs::simulator *sim) noexcept
@@ -311,6 +316,11 @@ namespace qasm
     {
         assert(simulator_ && "simulator not registered");
         qcs::gate_matrix(simulator_, m, tgt, pcs.data(), static_cast<int>(pcs.size()), ncs.data(), static_cast<int>(ncs.size()));
+    }
+
+    inline qubits qasm::qalloc(int n)
+    {
+        return qubits(*this, n);
     }
 
 
