@@ -75,10 +75,8 @@ namespace qasm
         /*-------------------------------------------------------
          * 条件付き演算子（N ビット版）
          *------------------------------------------------------*/
-        template <int N>
-        builder ctrl();
-        template <int N>
-        builder negctrl();
+        builder ctrl(int N = 1);
+        builder negctrl(int N = 1);
 
     private:
         void dispatch(int tgt, const math::matrix_t &m, const std::vector<int> &pcs, const std::vector<int> &ncs) const;
@@ -296,10 +294,8 @@ namespace qasm
         return pow(0.5) * inv();
     }
 
-    template <int N>
-    inline builder qasm::ctrl()
+    inline builder qasm::ctrl(int N)
     {
-        static_assert(N >= 1, "ctrl<N> requires N >= 1");
         builder out(*this);
         for (int i = 0; i < N; ++i)
         {
@@ -309,10 +305,8 @@ namespace qasm
         return out;
     }
 
-    template <int N>
-    inline builder qasm::negctrl()
+    inline builder qasm::negctrl(int N)
     {
-        static_assert(N >= 1, "negctrl<N> requires N >= 1");
         builder out(*this);
         for (int i = 0; i < N; ++i)
         {
