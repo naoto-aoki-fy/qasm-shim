@@ -13,7 +13,8 @@ set::set(std::initializer_list<int> lst) : indices(lst) {}
 qubits::qubits(qasm &ctx, int n) : ctx_(ctx), base_(ctx.next_id_), size_(n) {
     assert(n > 0);
     ctx.next_id_ += n;
-    qcs::alloc_qubit(n);
+    assert(ctx.simulator_ && "simulator not registered");
+    ctx.simulator_->alloc_qubit(n);
 }
 
 int qubits::operator[](int i) const {
@@ -176,8 +177,8 @@ builder qasm::negctrl(int N) {
 void qasm::dispatch(int tgt, const math::matrix_t &m, const std::vector<int> &pcs,
                     const std::vector<int> &ncs) const {
     assert(simulator_ && "simulator not registered");
-    qcs::gate_matrix(simulator_, m, tgt, pcs.data(), static_cast<int>(pcs.size()),
-                     ncs.data(), static_cast<int>(ncs.size()));
+    simulator_->gate_matrix(m, tgt, pcs.data(), static_cast<int>(pcs.size()),
+                            ncs.data(), static_cast<int>(ncs.size()));
 }
 
 qubits qasm::qalloc(int n) {
