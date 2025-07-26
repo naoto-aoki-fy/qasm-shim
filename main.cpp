@@ -44,7 +44,8 @@ int main() {
 
     qasm::qasm::qubits q1(q, 8), q2(q, 8);
 
-    (q.negctrl<2>() * q.ctrl<2>() * q.h())(q1[0], q1[1], q1[2], q1[3], q1[4]);
+    (q.negctrl<2>() * q.ctrl<2>() * q.h())(q1[qasm::slice(0,4)]);
+    (q.negctrl<2>() * q.ctrl<2>() * q.h())(q1[qasm::set{0,1,2,3,4}]);
     q.u(0, 0, 1.0)(q1[0]);
     q.u(0, 0, 0.5)(q1[0]);
     (q.ctrl<2>() * q.pow(0.5) * q.u(0, 0, 1.0))(q1[0], q1[1], q1[2]);
