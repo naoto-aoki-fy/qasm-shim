@@ -42,7 +42,7 @@ int main() {
     qasm::qasm q;
     q.register_simulator(&sim);
 
-    qasm::qasm::qubits q1(q, 8), q2(q, 8);
+    qasm::qubits q1(q, 8), q2(q, 8);
 
     (q.negctrl<2>() * q.ctrl<2>() * q.h())(q1[qasm::slice(0,4)]);
     (q.negctrl<2>() * q.ctrl<2>() * q.h())(q1[qasm::set{0,1,2,3,4}]);
