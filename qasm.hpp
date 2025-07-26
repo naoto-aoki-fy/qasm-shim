@@ -68,10 +68,7 @@ namespace qasm
         builder negctrl();
 
     private:
-        void dispatch(int tgt,
-                      const math::matrix_t &m,
-                      const std::vector<int> &pcs,
-                      const std::vector<int> &ncs) const;
+        void dispatch(int tgt, const math::matrix_t &m, const std::vector<int> &pcs, const std::vector<int> &ncs) const;
 
         qcs::simulator *simulator_ = nullptr;
         int next_id_ = 0;
@@ -205,8 +202,7 @@ namespace qasm
                     {
                         mat = math::matrix_inv(mat);
                     }
-                    dispatch(argv[arg_idx++], mat,
-                             pos_ctrls, neg_ctrls);
+                    dispatch(argv[arg_idx++], mat, pos_ctrls, neg_ctrls);
                     pos_ctrls.clear();
                     neg_ctrls.clear();
                     pow_exp = 1.0;
@@ -239,10 +235,7 @@ namespace qasm
             append_args(out, std::forward<Rest>(rest)...);
         }
 
-        void dispatch(int tgt,
-                      const math::matrix_t &m,
-                      const std::vector<int> &pcs,
-                      const std::vector<int> &ncs) const
+        void dispatch(int tgt, const math::matrix_t &m, const std::vector<int> &pcs, const std::vector<int> &ncs) const
         {
             ctx_.dispatch(tgt, m, pcs, ncs);
         }
@@ -306,17 +299,10 @@ namespace qasm
         return out;
     }
 
-    inline void qasm::dispatch(int tgt,
-                               const math::matrix_t &m,
-                               const std::vector<int> &pcs,
-                               const std::vector<int> &ncs) const
+    inline void qasm::dispatch(int tgt, const math::matrix_t &m, const std::vector<int> &pcs, const std::vector<int> &ncs) const
     {
         assert(simulator_ && "simulator not registered");
-        qcs::gate_matrix(simulator_,
-                         m,
-                         tgt,
-                         pcs.data(), static_cast<int>(pcs.size()),
-                         ncs.data(), static_cast<int>(ncs.size()));
+        qcs::gate_matrix(simulator_, m, tgt, pcs.data(), static_cast<int>(pcs.size()), ncs.data(), static_cast<int>(ncs.size()));
     }
 
 } // namespace qasm
