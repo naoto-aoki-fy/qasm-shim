@@ -191,6 +191,11 @@ namespace qasm
             std::vector<int> argv;
             argv.reserve(sizeof...(qs));
             append_args(argv, qs...);
+            (*this)(argv);
+        }
+
+        void operator()(const std::vector<int> &argv) const
+        {
             std::vector<int> pos_ctrls, neg_ctrls;
             math::matrix_t mat{};
             double pow_exp = 1.0;
