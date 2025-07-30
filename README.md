@@ -1,4 +1,4 @@
-# qasm_shim
+# qasm-shim
 
 This project provides a small C++ shim that mimics parts of OpenQASM 3 style syntax. It allows user-defined quantum circuits written in C++ to call a simulator backend through a simple API.
 
