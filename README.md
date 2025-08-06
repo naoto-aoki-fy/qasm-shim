@@ -1,15 +1,37 @@
 # qasm-shim
 
-This project provides a small C++ shim that mimics parts of OpenQASM 3 style syntax. It allows user-defined quantum circuits written in C++ to call a simulator backend through a simple API.
+This repository contains a lightweight C++ shim that mimics parts of the
+OpenQASM 3 syntax. User circuits derive from `qasm::qasm` and implement
+the `circuit()` method. Qubits are allocated with `qalloc`, classical bits
+with `clalloc`, and helper methods such as `reset` and `measure` are provided.
 
-The shim exposes an interface (`qcs`) for allocating qubits and dispatching gate matrices. Circuits are defined by subclassing `qasm::qasm` and overriding the `circuit()` method. Gates can be combined with a builder pattern to specify control bits, powers, and inverse operations.
+Gate expressions are composed using a small builder DSL (e.g. `h()`,
+`x()`, `u()`, `cu()`, `ctrl()`, `negctrl()`, `pow()`, `inv()`) and are
+forwarded to a `qcs::simulator` backend.
 
-A minimal stub simulator is included which prints operations to `stderr`. Other simulators can implement the same API (`alloc_qubit` and `gate_matrix`) to integrate with the shim.
+The `qcs` subdirectory provides a minimal stub simulator that logs
+operations to `stderr`. Other simulators can integrate with the shim by
+supplying a compatible implementation of the `qcs::simulator` interface
+defined in `qcs/include/qcs/qcs.hpp`. The location of the simulator
+implementation can be overridden with the `QCS` make variable when building.
 
 ## Building
 
 ```sh
+# Build the example circuit and main executable
 make all
+
+# Build and run the example
+make run
 ```
 
-This will generate `main` and `userqasm.so`. Executing `./main` will load the user circuit and forward operations to the simulator stub.
+`make all` produces `main` and `userqasm.so`. `main` uses `dlopen` to load
+`userqasm.so` and execute its `circuit` method. The default circuit is
+`src/userqasm_ghz.cpp`; another example `src/userqasm_001.cpp` is provided
+for reference.
+
+To link against a different simulator implementation:
+
+```sh
+make QCS=/path/to/qcs all
+```
