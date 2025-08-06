@@ -12,7 +12,7 @@ public:
         reset(q);
         
         h()(q[0]);
-        for(int qubit_num = 0; qubit_num < num_qubits; qubit_num++) {
+        for (int qubit_num : slice(0, num_qubits - 1)) {
             (ctrl(1) * h())(q[0], q[qubit_num]);
         }
         clbit = measure(q);
