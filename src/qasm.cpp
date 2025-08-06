@@ -6,7 +6,13 @@
 namespace qasm {
 
 slice_t slice(int first, int last) {
-    return slice_t{first, last};
+    return slice_t{first, last, 1};
+}
+
+slice_t slice(int first, int step, int last) {
+    assert(step > 0);
+    assert(first <= last);
+    return slice_t{first, last, step};
 }
 
 set::set(std::initializer_list<int> lst) : indices(lst) {}
@@ -25,8 +31,9 @@ int qubits::operator[](int i) const {
 
 indices_t qubits::operator[](slice_t sl) const {
     assert(0 <= sl.first && sl.first <= sl.last && sl.last < size_);
+    assert(sl.step > 0);
     indices_t out;
-    for (int i = sl.first; i <= sl.last; ++i) {
+    for (int i = sl.first; i <= sl.last; i += sl.step) {
         out.values.push_back(base_ + i);
     }
     return out;
