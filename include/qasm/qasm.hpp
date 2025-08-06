@@ -13,6 +13,18 @@ namespace qasm
     {
         int first;
         int last;
+
+        struct iterator
+        {
+            int value;
+            explicit iterator(int v) : value(v) {}
+            int operator*() const { return value; }
+            iterator &operator++() { ++value; return *this; }
+            bool operator!=(const iterator &other) const { return value != other.value; }
+        };
+
+        iterator begin() const { return iterator(first); }
+        iterator end() const { return iterator(last + 1); }
     };
 
     slice_t slice(int first, int last);
