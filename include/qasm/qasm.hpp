@@ -146,6 +146,15 @@ namespace qasm
             return indices_proxy(*this, std::move(idx));
         }
 
+        bit &operator=(const std::vector<int> &vals)
+        {
+            for (std::size_t i = 0; i < values_.size() && i < vals.size(); ++i)
+            {
+                values_[i] = vals[i];
+            }
+            return *this;
+        }
+
     private:
         std::vector<int> values_;
         friend class qasm;
