@@ -3,7 +3,7 @@
 class userqasm : public qasm::qasm
 {
 public:
-    bit clbit;
+    ::qasm::bit clbit;
     void circuit() {
         using namespace qasm;
 
@@ -19,7 +19,7 @@ public:
         (inv() * h())(q1[0]);
         (ctrl(2) * h())(q2[0], q2[1], q2[2]);
 
-        clbit[slice(0, 7)] = measure(q1[slice(0, 8)]);
+        clbit[slice(0, 7)] = measure(q1[slice(0, 7)]);
         clbit[{8, 9}] = measure(q2[{0, 1}]);
 
     }
