@@ -30,15 +30,22 @@ qubits::qubits(qasm &ctx, int n) : ctx_(ctx) {
 qubits::qubits(qasm &ctx, std::vector<int> idx) : ctx_(ctx), indices_(std::move(idx)) {}
 
 int qubits::operator[](int i) const {
-    assert(0 <= i && i < (int)indices_.size());
+    int n = static_cast<int>(indices_.size());
+    if (i < 0) {
+        i += n;
+    }
+    assert(0 <= i && i < n);
     return indices_[i];
 }
 
 indices_t qubits::operator[](slice_t sl) const {
-    assert(0 <= sl.first && sl.first <= sl.last && sl.last < (int)indices_.size());
+    int n = static_cast<int>(indices_.size());
+    int first = sl.first < 0 ? n + sl.first : sl.first;
+    int last = sl.last < 0 ? n + sl.last : sl.last;
+    assert(0 <= first && first <= last && last < n);
     assert(sl.step > 0);
     indices_t out;
-    for (int i = sl.first; i <= sl.last; i += sl.step) {
+    for (int i = first; i <= last; i += sl.step) {
         out.values.push_back(indices_[i]);
     }
     return out;
@@ -46,8 +53,12 @@ indices_t qubits::operator[](slice_t sl) const {
 
 indices_t qubits::operator[](const set &s) const {
     indices_t out;
+    int n = static_cast<int>(indices_.size());
     for (int v : s.indices) {
-        assert(0 <= v && v < (int)indices_.size());
+        if (v < 0) {
+            v += n;
+        }
+        assert(0 <= v && v < n);
         out.values.push_back(indices_[v]);
     }
     return out;
@@ -55,8 +66,12 @@ indices_t qubits::operator[](const set &s) const {
 
 indices_t qubits::operator[](std::initializer_list<int> lst) const {
     indices_t out;
+    int n = static_cast<int>(indices_.size());
     for (int v : lst) {
-        assert(0 <= v && v < (int)indices_.size());
+        if (v < 0) {
+            v += n;
+        }
+        assert(0 <= v && v < n);
         out.values.push_back(indices_[v]);
     }
     return out;
