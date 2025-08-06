@@ -25,6 +25,10 @@ void simulator::ensure_qubits_allocated() {}
 
 void simulator::reset() {}
 
+void simulator::reset(int qubit_num) {
+    fprintf(stderr, "[reset] %d\n", qubit_num);
+}
+
 void simulator::set_zero_state() {}
 
 void simulator::set_sequential_state() {}

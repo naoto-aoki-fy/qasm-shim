@@ -29,6 +29,7 @@ namespace qasm
     };
 
     class qubits;
+    class bit;
     struct token;
     class builder;
 
@@ -39,9 +40,10 @@ namespace qasm
         inline virtual ~qasm() = default;
 
         /*-------------------------------------------------------
-         * qubits allocation helper
+         * qubits / bits allocation helper
          *------------------------------------------------------*/
         qubits qalloc(int n);
+        bit clalloc(int n);
 
         /*-------------------------------------------------------
          * 外部 Simulator 登録
@@ -53,6 +55,7 @@ namespace qasm
          *------------------------------------------------------*/
         builder h();
         builder u(double th, double ph, double la);
+        builder cu(double th, double ph, double la, double ga);
         builder pow(double exp);
         builder inv();
         builder sqrt();
@@ -66,11 +69,86 @@ namespace qasm
         builder ctrl(int N = 1);
         builder negctrl(int N = 1);
 
+        /*-------------------------------------------------------
+         * reset / measure helper
+         *------------------------------------------------------*/
+        void reset(const qubits &qs);
+        void reset(const indices_t &qs);
+        std::vector<int> measure(const qubits &qs);
+        std::vector<int> measure(const indices_t &qs);
+
     private:
         qcs::simulator *simulator_ = nullptr;
         int next_id_ = 0;
         friend class builder;
         friend class qubits;
+    };
+
+    /*-------------------------------------------------------
+     * 古典ビット
+     *------------------------------------------------------*/
+    class bit
+    {
+    public:
+        bit() = default;
+        explicit bit(int n) : values_(n) {}
+
+        struct slice_proxy
+        {
+            bit &ref;
+            slice_t sl;
+            slice_proxy(bit &r, slice_t s) : ref(r), sl(s) {}
+            slice_proxy &operator=(const std::vector<int> &vals)
+            {
+                int len = sl.last - sl.first + 1;
+                for (int i = 0; i < len && i < (int)vals.size(); ++i)
+                {
+                    ref.values_[sl.first + i] = vals[i];
+                }
+                return *this;
+            }
+        };
+        slice_proxy operator[](slice_t sl)
+        {
+            assert(0 <= sl.first && sl.first <= sl.last && sl.last < (int)values_.size());
+            return slice_proxy(*this, sl);
+        }
+
+        struct indices_proxy
+        {
+            bit &ref;
+            std::vector<int> idx;
+            indices_proxy(bit &r, std::vector<int> i) : ref(r), idx(std::move(i)) {}
+            indices_proxy &operator=(const std::vector<int> &vals)
+            {
+                for (std::size_t i = 0; i < idx.size() && i < vals.size(); ++i)
+                {
+                    ref.values_[idx[i]] = vals[i];
+                }
+                return *this;
+            }
+        };
+        indices_proxy operator[](const set &s)
+        {
+            for (int v : s.indices)
+            {
+                assert(0 <= v && v < (int)values_.size());
+            }
+            return indices_proxy(*this, s.indices);
+        }
+        indices_proxy operator[](std::initializer_list<int> lst)
+        {
+            std::vector<int> idx(lst);
+            for (int v : idx)
+            {
+                assert(0 <= v && v < (int)values_.size());
+            }
+            return indices_proxy(*this, std::move(idx));
+        }
+
+    private:
+        std::vector<int> values_;
+        friend class qasm;
     };
 
     /*-------------------------------------------------------
@@ -89,6 +167,7 @@ namespace qasm
         qasm &ctx_;
         int base_;
         int size_;
+        friend class qasm;
     };
 
     /*-------------------------------------------------------

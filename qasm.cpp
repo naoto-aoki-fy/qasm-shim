@@ -144,6 +144,16 @@ builder qasm::u(double th, double ph, double la) {
     return builder(*this, tk);
 }
 
+builder qasm::cu(double th, double ph, double la, double ga) {
+    token ctrl{token::POS_CTRL};
+    token u4{token::U4};
+    u4.theta = th;
+    u4.phi = ph;
+    u4.lambda = la;
+    u4.gamma = ga;
+    return builder(*this, ctrl) * builder(*this, u4);
+}
+
 builder qasm::pow(double exp) {
     token tk{token::POW};
     tk.val = exp;
@@ -179,6 +189,42 @@ builder qasm::negctrl(int N) {
 
 qubits qasm::qalloc(int n) {
     return qubits(*this, n);
+}
+
+bit qasm::clalloc(int n) {
+    return bit(n);
+}
+
+void qasm::reset(const qubits &qs) {
+    assert(simulator_ && "simulator not registered");
+    for (int i = 0; i < qs.size_; ++i) {
+        simulator_->reset(qs.base_ + i);
+    }
+}
+
+void qasm::reset(const indices_t &qs) {
+    assert(simulator_ && "simulator not registered");
+    for (int q : qs.values) {
+        simulator_->reset(q);
+    }
+}
+
+std::vector<int> qasm::measure(const qubits &qs) {
+    indices_t idx;
+    for (int i = 0; i < qs.size_; ++i) {
+        idx.values.push_back(qs.base_ + i);
+    }
+    return measure(idx);
+}
+
+std::vector<int> qasm::measure(const indices_t &qs) {
+    assert(simulator_ && "simulator not registered");
+    std::vector<int> out;
+    out.reserve(qs.values.size());
+    for (int q : qs.values) {
+        out.push_back(simulator_->measure(q));
+    }
+    return out;
 }
 
 void qasm::circuit() {

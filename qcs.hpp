@@ -19,6 +19,7 @@ namespace qcs {
         void promise_qubits(int num_qubits);
 
         void reset();
+        void reset(int qubit_num);
         void set_zero_state();
         void set_sequential_state();
         void set_flat_state();
