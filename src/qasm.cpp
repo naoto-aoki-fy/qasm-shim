@@ -24,6 +24,8 @@ qubits::qubits(qasm &ctx, int n) : ctx_(ctx), base_(ctx.next_id_), size_(n) {
     ctx.simulator_->promise_qubits(n);
 }
 
+qubits::qubits(qasm &ctx, int base, int size) : ctx_(ctx), base_(base), size_(size) {}
+
 int qubits::operator[](int i) const {
     assert(0 <= i && i < size_);
     return base_ + i;
@@ -55,6 +57,18 @@ indices_t qubits::operator[](std::initializer_list<int> lst) const {
         out.values.push_back(base_ + v);
     }
     return out;
+}
+
+qubits concat(const qubits &lhs, const qubits &rhs) {
+    assert(&lhs.ctx_ == &rhs.ctx_);
+    if (lhs.base_ + lhs.size_ == rhs.base_) {
+        return qubits(lhs.ctx_, lhs.base_, lhs.size_ + rhs.size_);
+    }
+    if (rhs.base_ + rhs.size_ == lhs.base_) {
+        return qubits(lhs.ctx_, rhs.base_, lhs.size_ + rhs.size_);
+    }
+    assert(false && "qubits are not contiguous");
+    return qubits(lhs.ctx_, lhs.base_, lhs.size_); // unreachable, but suppress warning
 }
 
 builder::builder(const qasm &ctx) : ctx_(ctx) {}
