@@ -1,4 +1,4 @@
-#include "qasm.hpp"
+#include <qasm/qasm.hpp>
 
 class userqasm : public qasm::qasm
 {
