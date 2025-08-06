@@ -1,5 +1,5 @@
-#include "qasm.hpp"
-#include "qcs.hpp"
+#include <qasm/qasm.hpp>
+#include <qcs/qcs.hpp>
 #include <utility>
 #include <stdexcept>
 

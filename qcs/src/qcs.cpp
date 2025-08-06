@@ -1,4 +1,4 @@
-#include "qcs.hpp"
+#include <qcs/qcs.hpp>
 #include <cstdio>
 #include <algorithm>
 
