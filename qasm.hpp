@@ -3,10 +3,7 @@
 #include <cassert>
 
 #include "math_type.hpp"
-
-namespace qcs{
-    struct simulator;
-}
+#include "qcs.hpp"
 
 namespace qasm
 {
@@ -31,6 +28,7 @@ namespace qasm
     };
 
     class qubits;
+    class clbits;
     struct token;
     class builder;
 
@@ -44,6 +42,7 @@ namespace qasm
          * qubits allocation helper
          *------------------------------------------------------*/
         qubits qalloc(int n);
+        clbits clalloc(int n);
 
         /*-------------------------------------------------------
          * 外部 Simulator 登録
@@ -55,6 +54,7 @@ namespace qasm
          *------------------------------------------------------*/
         builder h();
         builder u(double th, double ph, double la);
+        builder cu(math::complex_t m00, math::complex_t m01, math::complex_t m10, math::complex_t m11);
         builder pow(double exp);
         builder inv();
         builder sqrt();
@@ -68,13 +68,50 @@ namespace qasm
         builder ctrl(int N = 1);
         builder negctrl(int N = 1);
 
+        template <typename... Q>
+        void reset(Q... qs)
+        {
+            std::vector<int> argv;
+            append_args(argv, qs...);
+            assert(simulator_ && "simulator not registered");
+            for (int q : argv)
+            {
+                simulator_->reset(q);
+            }
+        }
+
+        template <typename... Q>
+        void measure(Q... qs)
+        {
+            std::vector<int> argv;
+            append_args(argv, qs...);
+            assert(simulator_ && "simulator not registered");
+            for (int q : argv)
+            {
+                simulator_->measure(q);
+            }
+        }
+
     private:
-        void dispatch(int tgt, const math::matrix_t &m, const std::vector<int> &pcs, const std::vector<int> &ncs) const;
+        void dispatch(int tgt, const math::matrix_t &m, const std::vector<int> &pcs, const std::vector<int> &ncs, bool u4) const;
+
+        static void append_arg(std::vector<int> &out, int v);
+        static void append_arg(std::vector<int> &out, const indices_t &idx);
+        static void append_arg(std::vector<int> &out, const qubits &qs);
+        static void append_args(std::vector<int> &);
+        template <typename First, typename... Rest>
+        static void append_args(std::vector<int> &out, First &&first, Rest &&...rest)
+        {
+            append_arg(out, std::forward<First>(first));
+            append_args(out, std::forward<Rest>(rest)...);
+        }
 
         qcs::simulator *simulator_ = nullptr;
         int next_id_ = 0;
+        int next_clbit_id_ = 0;
         friend class builder;
         friend class qubits;
+        friend class clbits;
     };
 
     /*-------------------------------------------------------
@@ -93,6 +130,22 @@ namespace qasm
         qasm &ctx_;
         int base_;
         int size_;
+        friend class qasm;
+    };
+
+    /*-------------------------------------------------------
+     * 古典レジスタ
+     *------------------------------------------------------*/
+    class clbits
+    {
+    public:
+        clbits(qasm &ctx, int n);
+        int operator[](int i) const;
+
+    private:
+        qasm &ctx_;
+        int base_;
+        int size_;
     };
 
     /*-------------------------------------------------------
@@ -105,6 +158,7 @@ namespace qasm
             POS_CTRL,
             NEG_CTRL,
             MATRIX,
+            U4,
             POW,
             INV
         } kind;
@@ -154,7 +208,7 @@ namespace qasm
             append_args(out, std::forward<Rest>(rest)...);
         }
 
-        void dispatch(int tgt, const math::matrix_t &m, const std::vector<int> &pcs, const std::vector<int> &ncs) const;
+        void dispatch(int tgt, const math::matrix_t &m, const std::vector<int> &pcs, const std::vector<int> &ncs, bool u4) const;
     };
 
 } // namespace qasm

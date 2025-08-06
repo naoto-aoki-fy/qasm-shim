@@ -49,6 +49,18 @@ indices_t qubits::operator[](std::initializer_list<int> lst) const {
     return out;
 }
 
+clbits::clbits(qasm &ctx, int n) : ctx_(ctx), base_(ctx.next_clbit_id_), size_(n) {
+    assert(n > 0);
+    ctx.next_clbit_id_ += n;
+    assert(ctx.simulator_ && "simulator not registered");
+    ctx.simulator_->clalloc(n);
+}
+
+int clbits::operator[](int i) const {
+    assert(0 <= i && i < size_);
+    return base_ + i;
+}
+
 builder::builder(const qasm &ctx) : ctx_(ctx) {}
 
 builder::builder(const qasm &ctx, token tk) : ctx_(ctx) {
@@ -99,7 +111,21 @@ void builder::operator()(const std::vector<int> &argv) const {
             if (invert) {
                 mat = math::matrix_inv(mat);
             }
-            dispatch(argv[arg_idx++], mat, pos_ctrls, neg_ctrls);
+            dispatch(argv[arg_idx++], mat, pos_ctrls, neg_ctrls, false);
+            pos_ctrls.clear();
+            neg_ctrls.clear();
+            pow_exp = 1.0;
+            invert = false;
+            break;
+        case token::U4:
+            mat = t.mat;
+            if (pow_exp != 1.0) {
+                mat = math::matrix_pow(mat, pow_exp);
+            }
+            if (invert) {
+                mat = math::matrix_inv(mat);
+            }
+            dispatch(argv[arg_idx++], mat, pos_ctrls, neg_ctrls, true);
             pos_ctrls.clear();
             neg_ctrls.clear();
             pow_exp = 1.0;
@@ -121,8 +147,8 @@ void builder::append_arg(std::vector<int> &out, const indices_t &idx) {
 void builder::append_args(std::vector<int> &) {}
 
 void builder::dispatch(int tgt, const math::matrix_t &m, const std::vector<int> &pcs,
-                       const std::vector<int> &ncs) const {
-    ctx_.dispatch(tgt, m, pcs, ncs);
+                       const std::vector<int> &ncs, bool u4) const {
+    ctx_.dispatch(tgt, m, pcs, ncs, u4);
 }
 
 void qasm::register_simulator(qcs::simulator *sim) noexcept {
@@ -138,6 +164,12 @@ builder qasm::h() {
 builder qasm::u(double th, double ph, double la) {
     token tk{token::MATRIX};
     tk.mat = math::generate_matrix_u(th, ph, la);
+    return builder(*this, tk);
+}
+
+builder qasm::cu(math::complex_t m00, math::complex_t m01, math::complex_t m10, math::complex_t m11) {
+    token tk{token::U4};
+    tk.mat = {m00, m01, m10, m11};
     return builder(*this, tk);
 }
 
@@ -175,19 +207,44 @@ builder qasm::negctrl(int N) {
 }
 
 void qasm::dispatch(int tgt, const math::matrix_t &m, const std::vector<int> &pcs,
-                    const std::vector<int> &ncs) const {
+                    const std::vector<int> &ncs, bool u4) const {
     assert(simulator_ && "simulator not registered");
-    simulator_->gate_matrix(m, tgt, pcs.data(), static_cast<int>(pcs.size()),
+    if (u4) {
+        simulator_->gate_u4(m, tgt, pcs.data(), static_cast<int>(pcs.size()),
                             ncs.data(), static_cast<int>(ncs.size()));
+    } else {
+        simulator_->gate_matrix(m, tgt, pcs.data(), static_cast<int>(pcs.size()),
+                                ncs.data(), static_cast<int>(ncs.size()));
+    }
 }
 
 qubits qasm::qalloc(int n) {
     return qubits(*this, n);
 }
 
+clbits qasm::clalloc(int n) {
+    return clbits(*this, n);
+}
+
 void qasm::circuit() {
     throw std::runtime_error("circuit not implemented");
 }
+
+void qasm::append_arg(std::vector<int> &out, int v) {
+    out.push_back(v);
+}
+
+void qasm::append_arg(std::vector<int> &out, const indices_t &idx) {
+    out.insert(out.end(), idx.values.begin(), idx.values.end());
+}
+
+void qasm::append_arg(std::vector<int> &out, const qubits &qs) {
+    for (int i = 0; i < qs.size_; ++i) {
+        out.push_back(qs.base_ + i);
+    }
+}
+
+void qasm::append_args(std::vector<int> &) {}
 
 } // namespace qasm
 
