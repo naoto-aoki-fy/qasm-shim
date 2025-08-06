@@ -17,26 +17,29 @@ slice_t slice(int first, int step, int last) {
 
 set::set(std::initializer_list<int> lst) : indices(lst) {}
 
-qubits::qubits(qasm &ctx, int n) : ctx_(ctx), base_(ctx.next_id_), size_(n) {
+qubits::qubits(qasm &ctx, int n) : ctx_(ctx) {
     assert(n > 0);
-    ctx.next_id_ += n;
     assert(ctx.simulator_ && "simulator not registered");
+    indices_.reserve(n);
+    for (int i = 0; i < n; ++i) {
+        indices_.push_back(ctx.next_id_++);
+    }
     ctx.simulator_->promise_qubits(n);
 }
 
-qubits::qubits(qasm &ctx, int base, int size) : ctx_(ctx), base_(base), size_(size) {}
+qubits::qubits(qasm &ctx, std::vector<int> idx) : ctx_(ctx), indices_(std::move(idx)) {}
 
 int qubits::operator[](int i) const {
-    assert(0 <= i && i < size_);
-    return base_ + i;
+    assert(0 <= i && i < (int)indices_.size());
+    return indices_[i];
 }
 
 indices_t qubits::operator[](slice_t sl) const {
-    assert(0 <= sl.first && sl.first <= sl.last && sl.last < size_);
+    assert(0 <= sl.first && sl.first <= sl.last && sl.last < (int)indices_.size());
     assert(sl.step > 0);
     indices_t out;
     for (int i = sl.first; i <= sl.last; i += sl.step) {
-        out.values.push_back(base_ + i);
+        out.values.push_back(indices_[i]);
     }
     return out;
 }
@@ -44,8 +47,8 @@ indices_t qubits::operator[](slice_t sl) const {
 indices_t qubits::operator[](const set &s) const {
     indices_t out;
     for (int v : s.indices) {
-        assert(0 <= v && v < size_);
-        out.values.push_back(base_ + v);
+        assert(0 <= v && v < (int)indices_.size());
+        out.values.push_back(indices_[v]);
     }
     return out;
 }
@@ -53,22 +56,17 @@ indices_t qubits::operator[](const set &s) const {
 indices_t qubits::operator[](std::initializer_list<int> lst) const {
     indices_t out;
     for (int v : lst) {
-        assert(0 <= v && v < size_);
-        out.values.push_back(base_ + v);
+        assert(0 <= v && v < (int)indices_.size());
+        out.values.push_back(indices_[v]);
     }
     return out;
 }
 
 qubits concat(const qubits &lhs, const qubits &rhs) {
     assert(&lhs.ctx_ == &rhs.ctx_);
-    if (lhs.base_ + lhs.size_ == rhs.base_) {
-        return qubits(lhs.ctx_, lhs.base_, lhs.size_ + rhs.size_);
-    }
-    if (rhs.base_ + rhs.size_ == lhs.base_) {
-        return qubits(lhs.ctx_, rhs.base_, lhs.size_ + rhs.size_);
-    }
-    assert(false && "qubits are not contiguous");
-    return qubits(lhs.ctx_, lhs.base_, lhs.size_); // unreachable, but suppress warning
+    std::vector<int> idx = lhs.indices_;
+    idx.insert(idx.end(), rhs.indices_.begin(), rhs.indices_.end());
+    return qubits(lhs.ctx_, std::move(idx));
 }
 
 builder::builder(const qasm &ctx) : ctx_(ctx) {}
@@ -237,8 +235,8 @@ bit qasm::clalloc(int n) {
 
 void qasm::reset(const qubits &qs) {
     assert(simulator_ && "simulator not registered");
-    for (int i = 0; i < qs.size_; ++i) {
-        simulator_->reset(qs.base_ + i);
+    for (int q : qs.indices_) {
+        simulator_->reset(q);
     }
 }
 
@@ -251,9 +249,7 @@ void qasm::reset(const indices_t &qs) {
 
 std::vector<int> qasm::measure(const qubits &qs) {
     indices_t idx;
-    for (int i = 0; i < qs.size_; ++i) {
-        idx.values.push_back(qs.base_ + i);
-    }
+    idx.values = qs.indices_;
     return measure(idx);
 }
 

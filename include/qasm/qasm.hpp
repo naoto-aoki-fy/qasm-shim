@@ -191,7 +191,7 @@ namespace qasm
     };
 
     /*-------------------------------------------------------
-     * 量子レジスタ（連番 ID を払い出すだけ）
+     * 量子レジスタ（ID のリストを保持）
      *------------------------------------------------------*/
     class qubits
     {
@@ -203,10 +203,9 @@ namespace qasm
         indices_t operator[](std::initializer_list<int> lst) const;
 
     private:
-        qubits(qasm &ctx, int base, int size);
+        qubits(qasm &ctx, std::vector<int> idx);
         qasm &ctx_;
-        int base_;
-        int size_;
+        std::vector<int> indices_;
         friend class qasm;
         friend qubits concat(const qubits &lhs, const qubits &rhs);
     };
