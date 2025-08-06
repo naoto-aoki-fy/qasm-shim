@@ -91,6 +91,20 @@ void builder::operator()(const std::vector<int> &argv) const {
         case token::INV:
             invert = !invert;
             break;
+        case token::X: {
+            double exp = pow_exp * (invert ? -1.0 : 1.0);
+            assert(ctx_.simulator_ && "simulator not registered");
+            if (exp == 1.0) {
+                ctx_.simulator_->gate_x(exp, argv[arg_idx++], std::move(neg_ctrls), std::move(pos_ctrls));
+            } else {
+                ctx_.simulator_->gate_x_pow(exp, argv[arg_idx++], std::move(neg_ctrls), std::move(pos_ctrls));
+            }
+            pos_ctrls.clear();
+            neg_ctrls.clear();
+            pow_exp = 1.0;
+            invert = false;
+            break;
+        }
         case token::HADAMARD: {
             double exp = pow_exp * (invert ? -1.0 : 1.0);
             assert(ctx_.simulator_ && "simulator not registered");
@@ -132,6 +146,11 @@ void qasm::register_simulator(qcs::simulator *sim) noexcept {
 
 builder qasm::h() {
     token tk{token::HADAMARD};
+    return builder(*this, tk);
+}
+
+builder qasm::x() {
+    token tk{token::X};
     return builder(*this, tk);
 }
 
