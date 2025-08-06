@@ -1,6 +1,7 @@
 #include "qasm.hpp"
 #include "qcs.hpp"
-#include "math.hpp"
+#include <utility>
+#include <stdexcept>
 
 namespace qasm {
 
@@ -14,7 +15,7 @@ qubits::qubits(qasm &ctx, int n) : ctx_(ctx), base_(ctx.next_id_), size_(n) {
     assert(n > 0);
     ctx.next_id_ += n;
     assert(ctx.simulator_ && "simulator not registered");
-    ctx.simulator_->alloc_qubit(n);
+    ctx.simulator_->promise_qubits(n);
 }
 
 int qubits::operator[](int i) const {
@@ -72,7 +73,6 @@ builder builder::operator*(const builder &rhs) const {
 
 void builder::operator()(const std::vector<int> &argv) const {
     std::vector<int> pos_ctrls, neg_ctrls;
-    math::matrix_t mat{};
     double pow_exp = 1.0;
     bool invert = false;
     std::size_t arg_idx = 0;
@@ -91,20 +91,26 @@ void builder::operator()(const std::vector<int> &argv) const {
         case token::INV:
             invert = !invert;
             break;
-        case token::MATRIX:
-            mat = t.mat;
-            if (pow_exp != 1.0) {
-                mat = math::matrix_pow(mat, pow_exp);
-            }
-            if (invert) {
-                mat = math::matrix_inv(mat);
-            }
-            dispatch(argv[arg_idx++], mat, pos_ctrls, neg_ctrls);
+        case token::HADAMARD: {
+            double exp = pow_exp * (invert ? -1.0 : 1.0);
+            assert(ctx_.simulator_ && "simulator not registered");
+            ctx_.simulator_->hadamard_pow(exp, argv[arg_idx++], std::move(neg_ctrls), std::move(pos_ctrls));
             pos_ctrls.clear();
             neg_ctrls.clear();
             pow_exp = 1.0;
             invert = false;
             break;
+        }
+        case token::U4: {
+            double exp = pow_exp * (invert ? -1.0 : 1.0);
+            assert(ctx_.simulator_ && "simulator not registered");
+            ctx_.simulator_->gate_u4_pow(t.theta, t.phi, t.lambda, t.gamma, exp, argv[arg_idx++], std::move(neg_ctrls), std::move(pos_ctrls));
+            pos_ctrls.clear();
+            neg_ctrls.clear();
+            pow_exp = 1.0;
+            invert = false;
+            break;
+        }
         }
     }
     assert(arg_idx == argv.size());
@@ -120,24 +126,21 @@ void builder::append_arg(std::vector<int> &out, const indices_t &idx) {
 
 void builder::append_args(std::vector<int> &) {}
 
-void builder::dispatch(int tgt, const math::matrix_t &m, const std::vector<int> &pcs,
-                       const std::vector<int> &ncs) const {
-    ctx_.dispatch(tgt, m, pcs, ncs);
-}
-
 void qasm::register_simulator(qcs::simulator *sim) noexcept {
     simulator_ = sim;
 }
 
 builder qasm::h() {
-    token tk{token::MATRIX};
-    tk.mat = math::generate_matrix_hadamard();
+    token tk{token::HADAMARD};
     return builder(*this, tk);
 }
 
 builder qasm::u(double th, double ph, double la) {
-    token tk{token::MATRIX};
-    tk.mat = math::generate_matrix_u(th, ph, la);
+    token tk{token::U4};
+    tk.theta = th;
+    tk.phi = ph;
+    tk.lambda = la;
+    tk.gamma = 0;
     return builder(*this, tk);
 }
 
@@ -172,13 +175,6 @@ builder qasm::negctrl(int N) {
         out = out * builder(*this, tk);
     }
     return out;
-}
-
-void qasm::dispatch(int tgt, const math::matrix_t &m, const std::vector<int> &pcs,
-                    const std::vector<int> &ncs) const {
-    assert(simulator_ && "simulator not registered");
-    simulator_->gate_matrix(m, tgt, pcs.data(), static_cast<int>(pcs.size()),
-                            ncs.data(), static_cast<int>(ncs.size()));
 }
 
 qubits qasm::qalloc(int n) {

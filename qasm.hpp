@@ -2,10 +2,8 @@
 #include <vector>
 #include <cassert>
 
-#include "math_type.hpp"
-
 namespace qcs{
-    struct simulator;
+    class simulator;
 }
 
 namespace qasm
@@ -69,8 +67,6 @@ namespace qasm
         builder negctrl(int N = 1);
 
     private:
-        void dispatch(int tgt, const math::matrix_t &m, const std::vector<int> &pcs, const std::vector<int> &ncs) const;
-
         qcs::simulator *simulator_ = nullptr;
         int next_id_ = 0;
         friend class builder;
@@ -104,13 +100,17 @@ namespace qasm
         {
             POS_CTRL,
             NEG_CTRL,
-            MATRIX,
             POW,
-            INV
+            INV,
+            HADAMARD,
+            U4
         } kind;
-        math::matrix_t mat{};
+        double theta = 0;
+        double phi = 0;
+        double lambda = 0;
+        double gamma = 0;
         double val = 1;
-        explicit token(kind_t k) : kind(k), mat(), val(1) {}
+        explicit token(kind_t k) : kind(k) {}
     };
 
     /*-------------------------------------------------------
@@ -154,7 +154,6 @@ namespace qasm
             append_args(out, std::forward<Rest>(rest)...);
         }
 
-        void dispatch(int tgt, const math::matrix_t &m, const std::vector<int> &pcs, const std::vector<int> &ncs) const;
     };
 
 } // namespace qasm

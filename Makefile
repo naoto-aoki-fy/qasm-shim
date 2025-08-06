@@ -1,17 +1,16 @@
-.Phony: all
+.PHONY: all
 all: userqasm.so main
 
-userqasm.so: userqasm.cpp qasm.hpp qcs.hpp math.hpp math_type.hpp
+userqasm.so: userqasm.cpp qasm.hpp qcs.hpp
 	$(CXX) -fPIC -shared -std=c++11 userqasm.cpp -o userqasm.so
 
-main: main.cpp qcs.cpp qasm.cpp qasm.hpp qcs.hpp math.hpp math_type.hpp
+main: main.cpp qcs.cpp qasm.cpp qasm.hpp qcs.hpp
 	$(CXX) -std=c++11 -rdynamic main.cpp qcs.cpp qasm.cpp -o main
 
-.Phony: run
+.PHONY: run
 run: all
 	./main
 
-
-.Phony: clean
+.PHONY: clean
 clean:
 	$(RM) main userqasm.so

@@ -1,11 +1,36 @@
 #pragma once
-
-#include "math.hpp"
+#include <vector>
 
 namespace qcs {
-    struct simulator {
-        void alloc_qubit(int n);
-        void gate_matrix(math::matrix_t matrix, int tgt, int const* pc_list,
-                          int num_pcs, int const* nc_list, int num_ncs);
+    struct simulator_core;
+    class simulator {
+    private:
+        simulator_core* core;
+        int num_qubits;
+        void ensure_qubits_allocated();
+    public:
+        simulator();
+        void setup();
+        void dispose();
+
+        int get_num_procs();
+        int get_proc_num();
+
+        void promise_qubits(int num_qubits);
+
+        void reset();
+        void set_zero_state();
+        void set_sequential_state();
+        void set_flat_state();
+        void set_entangled_state();
+        void set_random_state();
+
+        void hadamard(int target_qubit_num, std::vector<int>&& negctrl_qubit_num_list, std::vector<int>&& ctrl_qubit_num_list);
+        void hadamard_pow(double exponent, int target_qubit_num, std::vector<int>&& negctrl_qubit_num_list, std::vector<int>&& ctrl_qubit_num_list);
+        void gate_x(double exponent, int target_qubit_num, std::vector<int>&& negctrl_qubit_num_list, std::vector<int>&& ctrl_qubit_num_list);
+        void gate_x_pow(double exponent, int target_qubit_num, std::vector<int>&& negctrl_qubit_num_list, std::vector<int>&& ctrl_qubit_num_list);
+        void gate_u4(double theta, double phi, double lambda, double gamma, int target_qubit_num, std::vector<int>&& negctrl_qubit_num_list, std::vector<int>&& ctrl_qubit_num_list);
+        void gate_u4_pow(double theta, double phi, double lambda, double gamma, double exponent, int target_qubit_num, std::vector<int>&& negctrl_qubit_num_list, std::vector<int>&& ctrl_qubit_num_list);
+        int measure(int qubit_num);
     };
 }

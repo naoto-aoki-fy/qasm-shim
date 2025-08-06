@@ -1,40 +1,67 @@
 #include "qcs.hpp"
 #include <cstdio>
+#include <algorithm>
 
-void qcs::simulator::alloc_qubit(int n)
-{
-    fprintf(stderr, "[qubit declare] %d\n", n);
+namespace qcs {
+
+struct simulator_core {};
+
+simulator::simulator() : core(nullptr), num_qubits(0) {}
+
+void simulator::setup() {}
+
+void simulator::dispose() {}
+
+int simulator::get_num_procs() { return 1; }
+
+int simulator::get_proc_num() { return 0; }
+
+void simulator::promise_qubits(int n) {
+    num_qubits = std::max(num_qubits, n);
+    fprintf(stderr, "[promise_qubits] %d\n", n);
 }
 
-void qcs::simulator::gate_matrix(math::matrix_t matrix, int tgt, int const *pc_list, int num_pcs, int const *nc_list, int num_ncs)
-{
-    fprintf(stderr, "gate matrix={");
-#pragma unroll
-    for (int i = 0; i < 4; ++i)
-    {
-        fprintf(stderr, "{%lf, %lf}", matrix[i].real(), matrix[i].imag());
-        if (i < 3)
-        {
-            fprintf(stderr, ", ");
-        }
-    }
-    fprintf(stderr, "} tgt=%d pc={", tgt);
-    for (int pc_num = 0; pc_num < num_pcs; ++pc_num)
-    {
-        fprintf(stderr, "%d", pc_list[pc_num]);
-        if (pc_num < num_pcs - 1)
-        {
-            fprintf(stderr, ", ");
-        }
-    }
-    fprintf(stderr, "} nc={");
-    for (int nc_num = 0; nc_num < num_ncs; ++nc_num)
-    {
-        fprintf(stderr, "%d", nc_list[nc_num]);
-        if (nc_num < num_ncs - 1)
-        {
-            fprintf(stderr, ", ");
-        }
-    }
-    fprintf(stderr, "}\n");
+void simulator::ensure_qubits_allocated() {}
+
+void simulator::reset() {}
+
+void simulator::set_zero_state() {}
+
+void simulator::set_sequential_state() {}
+
+void simulator::set_flat_state() {}
+
+void simulator::set_entangled_state() {}
+
+void simulator::set_random_state() {}
+
+void simulator::hadamard(int target, std::vector<int>&& ncs, std::vector<int>&& pcs) {
+    hadamard_pow(1.0, target, std::move(ncs), std::move(pcs));
 }
+
+void simulator::hadamard_pow(double exponent, int target, std::vector<int>&& ncs, std::vector<int>&& pcs) {
+    fprintf(stderr, "[hadamard_pow] exp=%lf tgt=%d\n", exponent, target);
+}
+
+void simulator::gate_x(double exponent, int target, std::vector<int>&& ncs, std::vector<int>&& pcs) {
+    gate_x_pow(exponent, target, std::move(ncs), std::move(pcs));
+}
+
+void simulator::gate_x_pow(double exponent, int target, std::vector<int>&& ncs, std::vector<int>&& pcs) {
+    fprintf(stderr, "[gate_x_pow] exp=%lf tgt=%d\n", exponent, target);
+}
+
+void simulator::gate_u4(double th, double ph, double la, double ga, int target, std::vector<int>&& ncs, std::vector<int>&& pcs) {
+    gate_u4_pow(th, ph, la, ga, 1.0, target, std::move(ncs), std::move(pcs));
+}
+
+void simulator::gate_u4_pow(double th, double ph, double la, double ga, double exp, int target, std::vector<int>&& ncs, std::vector<int>&& pcs) {
+    fprintf(stderr, "[gate_u4_pow] th=%lf ph=%lf la=%lf ga=%lf exp=%lf tgt=%d\n", th, ph, la, ga, exp, target);
+}
+
+int simulator::measure(int qubit_num) {
+    fprintf(stderr, "[measure] %d\n", qubit_num);
+    return 0;
+}
+
+} // namespace qcs
