@@ -33,6 +33,10 @@ namespace qasm
     {
         std::vector<int> indices;
         set(std::initializer_list<int> lst);
+        std::vector<int>::iterator begin() { return indices.begin(); }
+        std::vector<int>::iterator end() { return indices.end(); }
+        std::vector<int>::const_iterator begin() const { return indices.begin(); }
+        std::vector<int>::const_iterator end() const { return indices.end(); }
     };
 
     struct indices_t
