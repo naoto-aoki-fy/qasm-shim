@@ -8,8 +8,6 @@ A minimal stub simulator is included which prints operations to `stderr`. Other 
 
 ## Building
 
-Run `build.sh` to compile the example circuit (`userqasm.cpp`) into `userqasm.so` and link the main executable:
-
 ```sh
 make all
 ```
