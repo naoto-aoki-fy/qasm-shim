@@ -139,8 +139,13 @@ namespace qasm
         };
         slice_proxy operator[](slice_t sl)
         {
-            assert(0 <= sl.first && sl.first <= sl.last && sl.last < (int)values_.size());
+            int n = static_cast<int>(values_.size());
+            int first = sl.first < 0 ? n + sl.first : sl.first;
+            int last = sl.last < 0 ? n + sl.last : sl.last;
+            assert(0 <= first && first <= last && last < n);
             assert(sl.step > 0);
+            sl.first = first;
+            sl.last = last;
             return slice_proxy(*this, sl);
         }
 
@@ -160,18 +165,31 @@ namespace qasm
         };
         indices_proxy operator[](const set &s)
         {
+            int n = static_cast<int>(values_.size());
+            std::vector<int> idx;
+            idx.reserve(s.indices.size());
             for (int v : s.indices)
             {
-                assert(0 <= v && v < (int)values_.size());
+                if (v < 0) {
+                    v += n;
+                }
+                assert(0 <= v && v < n);
+                idx.push_back(v);
             }
-            return indices_proxy(*this, s.indices);
+            return indices_proxy(*this, std::move(idx));
         }
         indices_proxy operator[](std::initializer_list<int> lst)
         {
-            std::vector<int> idx(lst);
-            for (int v : idx)
+            int n = static_cast<int>(values_.size());
+            std::vector<int> idx;
+            idx.reserve(lst.size());
+            for (int v : lst)
             {
-                assert(0 <= v && v < (int)values_.size());
+                if (v < 0) {
+                    v += n;
+                }
+                assert(0 <= v && v < n);
+                idx.push_back(v);
             }
             return indices_proxy(*this, std::move(idx));
         }
