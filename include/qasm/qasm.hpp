@@ -203,11 +203,15 @@ namespace qasm
         indices_t operator[](std::initializer_list<int> lst) const;
 
     private:
+        qubits(qasm &ctx, int base, int size);
         qasm &ctx_;
         int base_;
         int size_;
         friend class qasm;
+        friend qubits concat(const qubits &lhs, const qubits &rhs);
     };
+
+    qubits concat(const qubits &lhs, const qubits &rhs);
 
     /*-------------------------------------------------------
      * ビルダーに詰めるトークン
