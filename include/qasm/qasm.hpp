@@ -66,6 +66,7 @@ namespace qasm
          * 単一量子ゲート生成関数
          *------------------------------------------------------*/
         builder h();
+        builder x();
         builder u(double th, double ph, double la);
         builder cu(double th, double ph, double la, double ga);
         builder pow(double exp);
@@ -203,6 +204,7 @@ namespace qasm
             POW,
             INV,
             HADAMARD,
+            X,
             U4
         } kind;
         double theta = 0;
