@@ -1,8 +1,8 @@
 #include <cstdio>
 #include <dlfcn.h>
 #include <stdexcept>
-#include "qasm.hpp"
-#include "qcs.hpp"
+#include <qasm/qasm.hpp>
+#include <qcs/qcs.hpp>
 
 int main()
 {
