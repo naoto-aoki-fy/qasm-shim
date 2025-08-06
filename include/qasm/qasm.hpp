@@ -13,21 +13,33 @@ namespace qasm
     {
         int first;
         int last;
+        int step;
 
         struct iterator
         {
             int value;
-            explicit iterator(int v) : value(v) {}
+            int step;
+            int last;
+            iterator(int v, int s, int l) : value(v), step(s), last(l) {}
             int operator*() const { return value; }
-            iterator &operator++() { ++value; return *this; }
+            iterator &operator++()
+            {
+                value += step;
+                if (value > last)
+                {
+                    value = last + step;
+                }
+                return *this;
+            }
             bool operator!=(const iterator &other) const { return value != other.value; }
         };
 
-        iterator begin() const { return iterator(first); }
-        iterator end() const { return iterator(last + 1); }
+        iterator begin() const { return iterator(first, step, last); }
+        iterator end() const { return iterator(last + step, step, last); }
     };
 
     slice_t slice(int first, int last);
+    slice_t slice(int first, int step, int last);
 
     struct set
     {
@@ -117,10 +129,10 @@ namespace qasm
             slice_proxy(bit &r, slice_t s) : ref(r), sl(s) {}
             slice_proxy &operator=(const std::vector<int> &vals)
             {
-                int len = sl.last - sl.first + 1;
+                int len = (sl.last - sl.first) / sl.step + 1;
                 for (int i = 0; i < len && i < (int)vals.size(); ++i)
                 {
-                    ref.values_[sl.first + i] = vals[i];
+                    ref.values_[sl.first + i * sl.step] = vals[i];
                 }
                 return *this;
             }
@@ -128,6 +140,7 @@ namespace qasm
         slice_proxy operator[](slice_t sl)
         {
             assert(0 <= sl.first && sl.first <= sl.last && sl.last < (int)values_.size());
+            assert(sl.step > 0);
             return slice_proxy(*this, sl);
         }
 
