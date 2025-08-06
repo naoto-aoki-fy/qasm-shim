@@ -3,7 +3,7 @@ QCS ?= qcs
 .PHONY: all
 all: userqasm.so main
 
-userqasm.so: src/userqasm_002.cpp include/qasm/qasm.hpp $(QCS)/include/qcs/qcs.hpp
+userqasm.so: src/userqasm_ghz.cpp include/qasm/qasm.hpp $(QCS)/include/qcs/qcs.hpp
 	$(CXX) -I./include -I./qcs/include -fPIC -shared -std=c++11 $< -o $@
 
 main: src/main.cpp $(QCS)/src/qcs.cpp src/qasm.cpp include/qasm/qasm.hpp $(QCS)/include/qcs/qcs.hpp
