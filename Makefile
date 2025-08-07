@@ -3,9 +3,8 @@ SM_VER ?= $(shell nvidia-smi --query-gpu=compute_cap --format=csv,noheader | awk
 CXX = g++
 NVCC = nvcc
 NVCCFLAGS = $(shell ./get_nvccopts.sh) -Xcompiler -Wformat=2 -I./include -lcurand -lnccl -lssl -lcrypto --cudart=shared -g -O3 -Xcompiler -fopenmp -Xlinker --export-dynamic -std=c++11 -rdc=true -Wno-deprecated-gpu-targets -gencode=arch=compute_$(SM_VER),code=sm_$(SM_VER)
-QCS_O = /home/naoto.aoki/Programs/20250718_qcs_measurement/qcs.o
 OBJDIR = obj
-# QCS_O ?= $(OBJDIR)/qcs.o
+QCS_O ?= $(OBJDIR)/qcs.o
 
 .PHONY: all
 all: userqasm.so main
