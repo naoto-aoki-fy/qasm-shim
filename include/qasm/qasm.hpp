@@ -13,26 +13,42 @@ namespace qasm
     {
         int first;
         int last;
+        int step;
 
         struct iterator
         {
             int value;
-            explicit iterator(int v) : value(v) {}
+            int step;
+            int last;
+            iterator(int v, int s, int l) : value(v), step(s), last(l) {}
             int operator*() const { return value; }
-            iterator &operator++() { ++value; return *this; }
+            iterator &operator++()
+            {
+                value += step;
+                if (value > last)
+                {
+                    value = last + step;
+                }
+                return *this;
+            }
             bool operator!=(const iterator &other) const { return value != other.value; }
         };
 
-        iterator begin() const { return iterator(first); }
-        iterator end() const { return iterator(last + 1); }
+        iterator begin() const { return iterator(first, step, last); }
+        iterator end() const { return iterator(last + step, step, last); }
     };
 
     slice_t slice(int first, int last);
+    slice_t slice(int first, int step, int last);
 
     struct set
     {
         std::vector<int> indices;
         set(std::initializer_list<int> lst);
+        std::vector<int>::iterator begin() { return indices.begin(); }
+        std::vector<int>::iterator end() { return indices.end(); }
+        std::vector<int>::const_iterator begin() const { return indices.begin(); }
+        std::vector<int>::const_iterator end() const { return indices.end(); }
     };
 
     struct indices_t
@@ -113,10 +129,10 @@ namespace qasm
             slice_proxy(bit &r, slice_t s) : ref(r), sl(s) {}
             slice_proxy &operator=(const std::vector<int> &vals)
             {
-                int len = sl.last - sl.first + 1;
+                int len = (sl.last - sl.first) / sl.step + 1;
                 for (int i = 0; i < len && i < (int)vals.size(); ++i)
                 {
-                    ref.values_[sl.first + i] = vals[i];
+                    ref.values_[sl.first + i * sl.step] = vals[i];
                 }
                 return *this;
             }
@@ -131,7 +147,13 @@ namespace qasm
         }
         slice_proxy operator[](slice_t sl)
         {
-            assert(0 <= sl.first && sl.first <= sl.last && sl.last < (int)values_.size());
+            int n = static_cast<int>(values_.size());
+            int first = sl.first < 0 ? n + sl.first : sl.first;
+            int last = sl.last < 0 ? n + sl.last : sl.last;
+            assert(0 <= first && first <= last && last < n);
+            assert(sl.step > 0);
+            sl.first = first;
+            sl.last = last;
             return slice_proxy(*this, sl);
         }
 
@@ -151,18 +173,31 @@ namespace qasm
         };
         indices_proxy operator[](const set &s)
         {
+            int n = static_cast<int>(values_.size());
+            std::vector<int> idx;
+            idx.reserve(s.indices.size());
             for (int v : s.indices)
             {
-                assert(0 <= v && v < (int)values_.size());
+                if (v < 0) {
+                    v += n;
+                }
+                assert(0 <= v && v < n);
+                idx.push_back(v);
             }
-            return indices_proxy(*this, s.indices);
+            return indices_proxy(*this, std::move(idx));
         }
         indices_proxy operator[](std::initializer_list<int> lst)
         {
-            std::vector<int> idx(lst);
-            for (int v : idx)
+            int n = static_cast<int>(values_.size());
+            std::vector<int> idx;
+            idx.reserve(lst.size());
+            for (int v : lst)
             {
-                assert(0 <= v && v < (int)values_.size());
+                if (v < 0) {
+                    v += n;
+                }
+                assert(0 <= v && v < n);
+                idx.push_back(v);
             }
             return indices_proxy(*this, std::move(idx));
         }
@@ -182,7 +217,7 @@ namespace qasm
     };
 
     /*-------------------------------------------------------
-     * 量子レジスタ（連番 ID を払い出すだけ）
+     * 量子レジスタ（ID のリストを保持）
      *------------------------------------------------------*/
     class qubits
     {
@@ -194,11 +229,14 @@ namespace qasm
         indices_t operator[](std::initializer_list<int> lst) const;
 
     private:
+        qubits(qasm &ctx, std::vector<int> idx);
         qasm &ctx_;
-        int base_;
-        int size_;
+        std::vector<int> indices_;
         friend class qasm;
+        friend qubits concat(const qubits &lhs, const qubits &rhs);
     };
+
+    qubits concat(const qubits &lhs, const qubits &rhs);
 
     /*-------------------------------------------------------
      * ビルダーに詰めるトークン
