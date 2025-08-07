@@ -3,13 +3,12 @@
 class userqasm : public qasm::qasm
 {
 public:
-    ::qasm::bit clbit;
     void circuit() {
         using namespace qasm;
 
         qubits q1 = qalloc(8);
         qubits q2 = qalloc(8);
-        clbit = clalloc(16);
+        bit clbit = clalloc(16);
         reset(q1);
         reset(q2);
         (negctrl(2) * ctrl(2) * h())(q1[0], q1[slice(1, 2)], q1[{3, 4}]);
