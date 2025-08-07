@@ -7,6 +7,7 @@
 int main()
 {
     qcs::simulator sim;
+    sim.setup();
 
     const auto userqasm_dl = dlopen("./userqasm.so", RTLD_LAZY);
     if (userqasm_dl == NULL) { throw std::runtime_error("dlopen failed"); }
@@ -17,6 +18,8 @@ int main()
     q->register_simulator(&sim);
     q->circuit();
     delete q;
+
+    sim.dispose();
 
     int const ret_dlclose = dlclose(userqasm_dl);
     if (ret_dlclose != 0) { throw std::runtime_error("dlclose failed"); }

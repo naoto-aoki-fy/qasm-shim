@@ -1,4 +1,5 @@
 #include <qasm/qasm.hpp>
+#include <cstdio>
 
 class userqasm : public qasm::qasm
 {
@@ -13,9 +14,12 @@ public:
         
         h()(q[0]);
         for (int qubit_num : slice(1, num_qubits - 1)) {
-            (ctrl(1) * x())(q[0], q[qubit_num]);
+            (ctrl() * x())(q[0], q[qubit_num]);
         }
         clbit = measure(q);
+        for (int qubit_num : slice(1, num_qubits - 1)) {
+            fprintf(stderr, "%d: %d\n", qubit_num, clbit[qubit_num]);
+        }
     }
 };
 

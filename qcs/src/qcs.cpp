@@ -61,8 +61,8 @@ void simulator::hadamard_pow(double exponent, int target, std::vector<int>&& ncs
     fprintf(stderr, "\n");
 }
 
-void simulator::gate_x(double exponent, int target, std::vector<int>&& ncs, std::vector<int>&& pcs) {
-    gate_x_pow(exponent, target, std::move(ncs), std::move(pcs));
+void simulator::gate_x(int target, std::vector<int>&& ncs, std::vector<int>&& pcs) {
+    gate_x_pow(1.0, target, std::move(ncs), std::move(pcs));
 }
 
 void simulator::gate_x_pow(double exponent, int target, std::vector<int>&& ncs, std::vector<int>&& pcs) {

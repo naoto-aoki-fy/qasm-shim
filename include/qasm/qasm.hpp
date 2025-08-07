@@ -121,6 +121,14 @@ namespace qasm
                 return *this;
             }
         };
+        int& operator[](std::size_t idx)
+        {
+            return values_[idx];
+        }
+        int const& operator[](std::size_t idx) const
+        {
+            return values_[idx];
+        }
         slice_proxy operator[](slice_t sl)
         {
             assert(0 <= sl.first && sl.first <= sl.last && sl.last < (int)values_.size());

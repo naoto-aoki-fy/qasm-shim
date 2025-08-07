@@ -95,7 +95,7 @@ void builder::operator()(const std::vector<int> &argv) const {
             double exp = pow_exp * (invert ? -1.0 : 1.0);
             assert(ctx_.simulator_ && "simulator not registered");
             if (exp == 1.0) {
-                ctx_.simulator_->gate_x(exp, argv[arg_idx++], std::move(neg_ctrls), std::move(pos_ctrls));
+                ctx_.simulator_->gate_x(argv[arg_idx++], std::move(neg_ctrls), std::move(pos_ctrls));
             } else {
                 ctx_.simulator_->gate_x_pow(exp, argv[arg_idx++], std::move(neg_ctrls), std::move(pos_ctrls));
             }
@@ -108,7 +108,11 @@ void builder::operator()(const std::vector<int> &argv) const {
         case token::HADAMARD: {
             double exp = pow_exp * (invert ? -1.0 : 1.0);
             assert(ctx_.simulator_ && "simulator not registered");
-            ctx_.simulator_->hadamard_pow(exp, argv[arg_idx++], std::move(neg_ctrls), std::move(pos_ctrls));
+            if (exp==1.0) {
+                ctx_.simulator_->hadamard(argv[arg_idx++], std::move(neg_ctrls), std::move(pos_ctrls));
+            } else {
+                ctx_.simulator_->hadamard_pow(exp, argv[arg_idx++], std::move(neg_ctrls), std::move(pos_ctrls));
+            }
             pos_ctrls.clear();
             neg_ctrls.clear();
             pow_exp = 1.0;
@@ -118,7 +122,11 @@ void builder::operator()(const std::vector<int> &argv) const {
         case token::U4: {
             double exp = pow_exp * (invert ? -1.0 : 1.0);
             assert(ctx_.simulator_ && "simulator not registered");
-            ctx_.simulator_->gate_u4_pow(t.theta, t.phi, t.lambda, t.gamma, exp, argv[arg_idx++], std::move(neg_ctrls), std::move(pos_ctrls));
+            if (exp==1.0) {
+                ctx_.simulator_->gate_u4(t.theta, t.phi, t.lambda, t.gamma, argv[arg_idx++], std::move(neg_ctrls), std::move(pos_ctrls));
+            } else {
+                ctx_.simulator_->gate_u4_pow(t.theta, t.phi, t.lambda, t.gamma, exp, argv[arg_idx++], std::move(neg_ctrls), std::move(pos_ctrls));
+            }
             pos_ctrls.clear();
             neg_ctrls.clear();
             pow_exp = 1.0;
